@@ -1,33 +1,31 @@
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
+import { trpc } from "@/lib/trpc";
+import { ArrowUpRight, BellRing, BookOpen, ClipboardList, Clock3, PackageOpen, Plus, TrendingDown, UserRound, UsersRound } from "lucide-react";
+import { Link } from "wouter";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Workflow, Frontend Best Practices, Design Guide and Common Pitfalls
- */
+const formatDate = (value: Date | string | null | undefined) => value ? new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(" de ", " ") : "—";
+const typeLabels: Record<string, string> = { absence: "Falta", late: "Atraso", homework: "Tarefa não feita", book: "Livro esquecido", uniform: "Falta de uniforme", behavior: "Comportamento", other: "Outro" };
+
 export default function Home() {
-  // The useAuth hook provides authentication state.
-  // To implement login/logout, call logout(), or start login from an event
-  // handler: onClick={() => startLogin()} (imported from "@/const"). Never call
-  // startLogin() during render (no href={startLogin()}) — it mints a one-time
-  // nonce cookie and must run only at the moment of navigation.
-  let { user, loading, error, isAuthenticated, logout } = useAuth();
-
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
-      </main>
-    </div>
-  );
+  const stats = trpc.school.dashboard.useQuery();
+  const incidents = trpc.school.incidents.useQuery();
+  const enrollments = trpc.school.enrollments.useQuery();
+  const inventory = trpc.school.inventory.useQuery();
+  const statCards = [
+    { label: "Alunos ativos", value: stats.data?.students ?? 0, hint: "cadastros ativos", icon: UsersRound, tone: "teal" },
+    { label: "Matrículas 2026", value: stats.data?.enrollments ?? 0, hint: "turmas confirmadas", icon: BookOpen, tone: "blue" },
+    { label: "Estoque baixo", value: stats.data?.lowStock ?? 0, hint: "itens precisam de atenção", icon: TrendingDown, tone: "orange" },
+    { label: "Anotações abertas", value: stats.data?.openIncidents ?? 0, hint: "pendências para acompanhar", icon: ClipboardList, tone: "rose" },
+  ];
+  const lowStock = inventory.data?.filter(item => item.quantity <= item.minQuantity).slice(0, 4) ?? [];
+  return <div className="mx-auto max-w-[1400px] space-y-7">
+    <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="mb-2 text-xs font-bold uppercase tracking-[.2em] text-[#14877e]">Bom dia, equipe</p><h2 className="font-display text-3xl font-bold tracking-tight text-[#12233f] sm:text-4xl">A escola em movimento.</h2><p className="mt-2 max-w-xl text-sm leading-6 text-[#778592]">Uma visão rápida do que está acontecendo hoje no Colégio Horizonte.</p></div><div className="flex gap-2"><Link href="/alunos"><button className="inline-flex items-center gap-2 rounded-xl bg-[#12233f] px-4 py-3 text-xs font-bold text-white shadow-[0_8px_18px_rgba(18,35,63,.15)] transition hover:-translate-y-0.5"><Plus className="h-4 w-4" /> Nova matrícula</button></Link><Link href="/anotacoes"><button className="hidden items-center gap-2 rounded-xl border border-[#d9e2e1] bg-white px-4 py-3 text-xs font-bold text-[#526374] transition hover:border-[#8ccfc2] sm:inline-flex"><ClipboardList className="h-4 w-4" /> Registrar anotação</button></Link></div></section>
+    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{statCards.map(item => <Card key={item.label} className="overflow-hidden border-0 bg-white shadow-[0_7px_25px_rgba(26,54,73,.05)]"><CardContent className="p-5"><div className="flex items-start justify-between"><div className={`grid h-10 w-10 place-items-center rounded-xl ${item.tone === "teal" ? "bg-[#e7f4f1] text-[#15887f]" : item.tone === "blue" ? "bg-[#e9eff9] text-[#4268aa]" : item.tone === "orange" ? "bg-[#fff0df] text-[#c2772d]" : "bg-[#f9e7e7] text-[#ba5a5a]"}`}><item.icon className="h-[18px] w-[18px]" /></div><ArrowUpRight className="h-4 w-4 text-[#b6c0c5]" /></div><p className="mt-5 text-[12px] font-semibold text-[#87949e]">{item.label}</p><p className="mt-1 font-display text-3xl font-bold text-[#12233f]">{item.value}</p><p className="mt-1 text-[11px] text-[#a2adb4]">{item.hint}</p></CardContent></Card>)}</section>
+    <section className="grid gap-5 xl:grid-cols-[1.25fr_.75fr]">
+      <Card className="border-0 bg-white shadow-[0_7px_25px_rgba(26,54,73,.05)]"><CardContent className="p-0"><div className="flex items-center justify-between border-b border-[#edf0ef] px-5 py-5"><div><h3 className="text-sm font-bold text-[#253b55]">Anotações recentes</h3><p className="mt-1 text-[11px] text-[#9aa5ae]">Acompanhe os últimos registros pedagógicos</p></div><Link href="/anotacoes" className="text-[11px] font-bold text-[#14877e] hover:underline">Ver todas</Link></div><div className="divide-y divide-[#f0f2f1]">{incidents.isLoading ? <div className="p-8 text-center text-sm text-[#9aa5ae]">Carregando registros...</div> : incidents.data?.length ? incidents.data.slice(0, 5).map(incident => <div key={incident.id} className="flex items-center gap-3 px-5 py-4"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f7efea] text-[#a76045]"><BellRing className="h-4 w-4" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="truncate text-xs font-bold text-[#3b4d60]">{incident.studentName ?? "Aluno"}</p><Badge variant="outline" className="border-[#e8d9d1] bg-[#fffaf7] px-2 py-0 text-[9px] font-bold text-[#ae6b50]">{typeLabels[incident.type]}</Badge></div><p className="mt-1 truncate text-[11px] text-[#8d99a3]">{incident.note}</p></div><span className="shrink-0 text-[10px] font-semibold text-[#aeb7bd]">{formatDate(incident.occurredAt)}</span></div>) : <div className="p-8 text-center text-sm text-[#9aa5ae]">Nenhuma anotação encontrada.</div>}</div></CardContent></Card>
+      <div className="space-y-5"><Card className="border-0 bg-[#12233f] text-white shadow-[0_7px_25px_rgba(26,54,73,.12)]"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#8be0cf]">Estoque</p><h3 className="mt-2 text-lg font-bold">Itens para repor</h3></div><PackageOpen className="h-5 w-5 text-[#8be0cf]" /></div><div className="mt-5 space-y-3">{lowStock.length ? lowStock.map(item => <div key={item.id} className="flex items-center justify-between border-b border-white/10 pb-3 last:border-0 last:pb-0"><div><p className="text-xs font-semibold">{item.name}</p><p className="mt-1 text-[10px] text-white/50">{item.category === "uniform" ? "Uniforme" : item.category === "book" ? "Livro bimestral" : "Outro"}{item.size ? ` · ${item.size}` : ""}</p></div><span className="rounded-full bg-[#eea85e]/15 px-2 py-1 text-[10px] font-bold text-[#ffc27e]">{item.quantity} un.</span></div>) : <p className="text-sm text-white/60">Tudo abastecido por aqui.</p>}</div><Link href="/estoque" className="mt-5 flex items-center gap-1 text-[11px] font-bold text-[#8be0cf] hover:underline">Abrir controle de estoque <ArrowUpRight className="h-3.5 w-3.5" /></Link></CardContent></Card>
+      <Card className="border-0 bg-white shadow-[0_7px_25px_rgba(26,54,73,.05)]"><CardContent className="p-5"><div className="flex items-center justify-between"><div><h3 className="text-sm font-bold text-[#253b55]">Últimas matrículas</h3><p className="mt-1 text-[11px] text-[#9aa5ae]">Turmas do ano letivo</p></div><Clock3 className="h-4 w-4 text-[#9eabb4]" /></div><div className="mt-4 space-y-3">{enrollments.data?.slice(0, 3).map(enrollment => <div key={enrollment.id} className="flex items-center gap-3"><div className="grid h-8 w-8 place-items-center rounded-full bg-[#edf1f9] text-[#5470aa]"><UserRound className="h-3.5 w-3.5" /></div><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-[#3b4d60]">{enrollment.studentName ?? "Aluno"}</p><p className="text-[10px] text-[#9aa5ae]">{enrollment.className} · {enrollment.schoolYear}</p></div><span className="text-[10px] font-semibold text-[#aeb7bd]">{formatDate(enrollment.enrollmentDate)}</span></div>)}</div></CardContent></Card></div>
+    </section>
+  </div>;
 }

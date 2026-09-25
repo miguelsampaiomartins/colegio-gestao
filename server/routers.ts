@@ -1,28 +1,61 @@
+import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import {
+  createEnrollment,
+  createIncident,
+  createInventoryItem,
+  createStudent,
+  getDashboardStats,
+  listEnrollments,
+  listIncidents,
+  listInventory,
+  listStudents,
+  recordInventoryMovement,
+  resolveIncident,
+} from "./db";
+
+const studentInput = z.object({
+  name: z.string().min(2),
+  grade: z.string().min(1),
+  guardianName: z.string().min(2),
+  guardianPhone: z.string().optional(),
+  birthDate: z.string().optional(),
+});
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
-
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  school: router({
+    dashboard: protectedProcedure.query(() => getDashboardStats()),
+    students: protectedProcedure.query(() => listStudents()),
+    addStudent: protectedProcedure.input(studentInput).mutation(({ input }) => createStudent(input)),
+    enrollments: protectedProcedure.query(() => listEnrollments()),
+    addEnrollment: protectedProcedure
+      .input(z.object({ studentId: z.number().int().positive(), schoolYear: z.string().min(4), className: z.string().min(1), shift: z.enum(["morning", "afternoon", "fulltime"]) }))
+      .mutation(({ input }) => createEnrollment(input)),
+    inventory: protectedProcedure.query(() => listInventory()),
+    addInventoryItem: protectedProcedure
+      .input(z.object({ name: z.string().min(2), category: z.enum(["uniform", "book", "other"]), size: z.string().optional(), quantity: z.number().int().min(0), minQuantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) }))
+      .mutation(({ input }) => createInventoryItem(input)),
+    inventoryMovement: protectedProcedure
+      .input(z.object({ itemId: z.number().int().positive(), type: z.enum(["entry", "exit"]), quantity: z.number().int().positive(), reason: z.string().optional() }))
+      .mutation(({ input }) => recordInventoryMovement(input)),
+    incidents: protectedProcedure.query(() => listIncidents()),
+    addIncident: protectedProcedure
+      .input(z.object({ studentId: z.number().int().positive(), type: z.enum(["absence", "late", "homework", "book", "uniform", "behavior", "other"]), note: z.string().min(3) }))
+      .mutation(({ input }) => createIncident(input)),
+    resolveIncident: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => resolveIncident(input.id)),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
