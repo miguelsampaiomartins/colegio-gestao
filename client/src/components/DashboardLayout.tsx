@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import {
@@ -41,9 +42,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return saved ? parseInt(saved, 10) : 252;
   });
   const { loading, user } = useAuth();
+  const provider = trpc.auth.provider.useQuery(undefined, { retry: false });
   useEffect(() => localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString()), [sidebarWidth]);
   if (loading) return <DashboardLayoutSkeleton />;
-  if (!user) return <div className="grid min-h-screen place-items-center bg-[#f7f7f3] p-6"><div className="w-full max-w-md rounded-3xl bg-[#fffefb] p-8 text-center shadow-[0_16px_60px_rgba(26,54,73,.1)]"><div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#12233f] text-white"><GraduationCap className="h-7 w-7" /></div><p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em] text-[#14877e]">Colégio Gestão</p><h1 className="mt-2 font-display text-2xl font-bold text-[#12233f]">Acesse o painel da escola</h1><p className="mt-3 text-sm leading-6 text-[#7c8994]">Entre com sua conta para gerenciar alunos, matrículas, estoque e anotações.</p><Button onClick={() => startLogin()} className="mt-7 h-11 w-full rounded-xl bg-[#12233f] text-xs font-bold text-white hover:bg-[#203b60]">Entrar no sistema <LogIn className="ml-2 h-4 w-4" /></Button></div></div>;
+  if (!user) {
+    const google = provider.data?.mode === "google";
+    const error = new URLSearchParams(window.location.search).get("login_error");
+    return <div className="grid min-h-screen place-items-center bg-[#f7f7f3] p-6">
+      <div className="w-full max-w-md rounded-3xl bg-[#fffefb] p-8 text-center shadow-[0_16px_60px_rgba(26,54,73,.1)]">
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#12233f] text-white"><GraduationCap className="h-7 w-7" /></div>
+        <p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em] text-[#14877e]">Colégio Gestão</p>
+        <h1 className="mt-2 font-display text-2xl font-bold text-[#12233f]">Acesse o painel da escola</h1>
+        <p className="mt-3 text-sm leading-6 text-[#7c8994]">Entre com sua conta autorizada para gerenciar alunos, matrículas, estoque e vendas.</p>
+        <Button disabled={provider.isLoading || provider.isError || !provider.data?.configured} onClick={() => google ? window.location.assign("/api/auth/google/start") : startLogin()} className="mt-7 h-11 w-full rounded-xl bg-[#12233f] text-xs font-bold text-white hover:bg-[#203b60] disabled:opacity-50">
+          {google ? "Entrar com Google" : "Entrar no sistema"}<LogIn className="ml-2 h-4 w-4" />
+        </Button>
+        {error && <p role="alert" className="mt-4 text-xs font-semibold text-[#b96046]">{error === "cancelled" ? "O login foi cancelado. Tente novamente." : "Não foi possível concluir o login. Confira as credenciais e tente novamente."}</p>}
+        {provider.data && !provider.data.configured && <p role="alert" className="mt-4 text-xs leading-5 text-[#b96046]">{google ? `Configure o Google no .env e reinicie o servidor: ${provider.data.missing.join(", ")}.` : "Configure o provedor de login antes de entrar."}</p>}
+        {provider.isError && <p role="alert" className="mt-4 text-xs text-[#b96046]">Não foi possível consultar a configuração de login. Verifique o servidor.</p>}
+      </div>
+    </div>;
+  }
   return (
     <div className="min-h-screen bg-[#f7f7f3] text-[#12233f]">
       <DashboardLayoutContent collapsed={collapsed} setCollapsed={setCollapsed} sidebarWidth={sidebarWidth} setSidebarWidth={setSidebarWidth}>
