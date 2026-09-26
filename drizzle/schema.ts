@@ -38,10 +38,20 @@ export const students = mysqlTable("students", {
   grade: varchar("grade", { length: 80 }).notNull(),
   guardianName: varchar("guardianName", { length: 160 }).notNull(),
   guardianPhone: varchar("guardianPhone", { length: 40 }),
+  cpf: varchar("cpf", { length: 11 }).unique(),
+  guardianCpf: varchar("guardianCpf", { length: 11 }),
+  address: text("address"),
+  guardianEmail: varchar("guardianEmail", { length: 320 }),
   status: mysqlEnum("status", ["active", "inactive"]).default("active").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
-
+/** Contact numbers for the responsible adult; legacy guardianPhone remains available. */
+export const studentPhones = mysqlTable("studentPhones", {
+  id: int("id").autoincrement().primaryKey(),
+  studentId: int("studentId").notNull(),
+  number: varchar("number", { length: 20 }).notNull(),
+  position: int("position").default(0).notNull(),
+});
 export const enrollments = mysqlTable("enrollments", {
   id: int("id").autoincrement().primaryKey(),
   studentId: int("studentId").notNull(),

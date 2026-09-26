@@ -1,4 +1,5 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -9,6 +10,7 @@ import {
   inventoryVariants,
   saleItems,
   sales,
+  studentPhones,
   students,
   users,
 } from "../drizzle/schema";
@@ -82,15 +84,31 @@ export async function getDashboardStats() {
 export async function listStudents() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(students).orderBy(students.name);
+  const rows = await db.select().from(students).orderBy(students.name);
+  if (!rows.length) return [];
+  const phones = await db.select().from(studentPhones).where(inArray(studentPhones.studentId, rows.map(row => row.id))).orderBy(studentPhones.position, studentPhones.id);
+  const byStudent = new Map<number, string[]>();
+  for (const phone of phones) byStudent.set(phone.studentId, [...(byStudent.get(phone.studentId) ?? []), phone.number]);
+  return rows.map(row => ({ ...row, phones: byStudent.get(row.id) ?? (row.guardianPhone ? [row.guardianPhone] : []) }));
 }
-
-export async function createStudent(input: typeof students.$inferInsert) {
+export async function createStudent(input: Omit<typeof students.$inferInsert, "guardianPhone"> & { phones: string[] }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  await db.insert(students).values(input);
-  const rows = await db.select().from(students).orderBy(desc(students.id)).limit(1);
-  return rows[0];
+  const { phones, ...student } = input;
+  try {
+    return await db.transaction(async tx => {
+      const [inserted] = await tx.insert(students).values({ ...student, guardianPhone: phones[0] });
+      await tx.insert(studentPhones).values(phones.map((number, position) => ({ studentId: inserted.insertId, number, position })));
+      const [created] = await tx.select().from(students).where(eq(students.id, inserted.insertId)).limit(1);
+      return { ...created, phones };
+    });
+  } catch (error) {
+    const dbError = error as { code?: string; cause?: { code?: string } };
+    if (dbError.code === "ER_DUP_ENTRY" || dbError.cause?.code === "ER_DUP_ENTRY") {
+      throw new TRPCError({ code: "CONFLICT", message: "Este CPF de aluno já está cadastrado." });
+    }
+    throw error;
+  }
 }
 
 export async function listEnrollments() {

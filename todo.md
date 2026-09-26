@@ -19,3 +19,11 @@ Parar o servidor local, atualizar o clone, aplicar a migração com `pnpm.cmd db
 ## Antes de produção
 
 Implementar backup e recuperação do banco, HTTPS caso o sistema fique disponível em outros computadores e limitação de tentativas compartilhada entre instâncias se for publicado em hospedagem distribuída. O acesso do funcionário cobre as telas operacionais, não a gestão dos membros.
+
+## Cadastro e saídas por venda — atualização de 26/09/2026
+
+- [x] Ampliar alunos com CPF do aluno e responsável, endereço, e-mail e telefones múltiplos sem alterar registros existentes.
+- [x] Exibir e validar os novos campos na tela de alunos e matrículas; permitir iniciar a matrícula após o cadastro.
+- [x] Agrupar as saídas de estoque pelo número da venda com linhas de produto, variedade e quantidade, preservando entradas comuns.
+- [x] Revisar migração e executar teste de integração de cadastro, legado, venda 2+2 e cancelamento em banco descartável.
+- [ ] Salvar checkpoint e atualizar o GitHub privado.

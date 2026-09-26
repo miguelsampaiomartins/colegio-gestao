@@ -74,3 +74,7 @@ Instale [Node.js 22.13+](https://nodejs.org/en/download), Git, pnpm 10 e MySQL. 
 | Servidor escolhe porta diferente de 3000 | Feche o processo antigo que ocupa a 3000 antes de iniciar; escolha apenas `localhost`. |
 
 Para verificar o código: `pnpm.cmd check`, `pnpm.cmd test` e `pnpm.cmd build` dentro da pasta do projeto. **Antes de usar dados reais**, configure backup regular do MySQL. Para abrir o sistema em outros computadores, é necessário hospedar o servidor com HTTPS e planejar uma política de recuperação da conta do dono; `localhost` sozinho só funciona no computador onde está rodando.
+
+### Novos dados de matrícula
+
+Depois de atualizar com `git pull origin main`, pare o servidor e rode `pnpm.cmd db:push` no mesmo banco local antes de iniciar o site. A migração acrescenta CPF do aluno, CPF do responsável, endereço e e-mail, além de uma tabela para vários telefones; os cadastros antigos permanecem e exibem campos faltantes como **não informados**. O CPF completo é dado pessoal: antes de cadastrar CPFs reais, ative o modo `VITE_AUTH_PROVIDER=password`, crie os acessos autorizados e mantenha o banco protegido e com backup. Na cópia hospedada que ainda usa o login antigo, **não cadastre dados reais antes de revisar e restringir os acessos**.

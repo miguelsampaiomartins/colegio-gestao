@@ -29,12 +29,19 @@ import {
   resolveIncident,
   updateInventoryVariantPrice,
 } from "./db";
+import { digitsOnly, isValidCpf, normalizeBrazilianPhone } from "./studentValidation";
 
+const cpfInput = z.string().transform(digitsOnly).refine(isValidCpf, "Informe um CPF válido com 11 dígitos.");
+const phoneInput = z.string().transform(normalizeBrazilianPhone).refine(value => /^[1-9]\d[2-9]\d{7,8}$/.test(value), "Informe um telefone com DDD válido.");
 const studentInput = z.object({
-  name: z.string().min(2),
-  grade: z.string().min(1),
-  guardianName: z.string().min(2),
-  guardianPhone: z.string().optional(),
+  name: z.string().trim().min(2).max(160),
+  grade: z.string().trim().min(1).max(80),
+  guardianName: z.string().trim().min(2).max(160),
+  cpf: cpfInput,
+  guardianCpf: cpfInput,
+  address: z.string().trim().min(8).max(500),
+  guardianEmail: z.email().max(320),
+  phones: z.array(phoneInput).min(1).max(20).refine(values => new Set(values).size === values.length, "Não repita telefones."),
   birthDate: z.string().optional(),
 });
 
