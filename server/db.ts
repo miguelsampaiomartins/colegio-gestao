@@ -9,6 +9,7 @@ import {
   inventoryMovements,
   inventoryVariants,
   saleItems,
+  schoolProfile,
   sales,
   studentPhones,
   students,
@@ -117,6 +118,21 @@ export async function listEnrollments() {
   if (!db) return [];
   const rows = await db.select({ id: enrollments.id, studentId: enrollments.studentId, studentName: students.name, schoolYear: enrollments.schoolYear, className: enrollments.className, shift: enrollments.shift, status: enrollments.status, enrollmentDate: enrollments.enrollmentDate }).from(enrollments).leftJoin(students, eq(enrollments.studentId, students.id)).orderBy(desc(enrollments.enrollmentDate), desc(enrollments.id));
   return rows.map(row => ({ ...row, enrollmentNumber: formatEnrollmentNumber(row.id) }));
+}
+
+export async function getSchoolProfile() {
+  const db = await getDb();
+  if (!db) return null;
+  const [profile] = await db.select().from(schoolProfile).where(eq(schoolProfile.id, 1)).limit(1);
+  return profile ?? null;
+}
+
+export async function saveSchoolProfile(input: { name: string; cnpj?: string | null; address?: string | null; phone?: string | null; email?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const values = { id: 1, name: input.name.trim(), cnpj: input.cnpj || null, address: input.address?.trim() || null, phone: input.phone || null, email: input.email?.trim() || null };
+  await db.insert(schoolProfile).values(values).onDuplicateKeyUpdate({ set: { name: values.name, cnpj: values.cnpj, address: values.address, phone: values.phone, email: values.email, updatedAt: new Date() } });
+  return getSchoolProfile();
 }
 
 export async function createEnrollment(input: typeof enrollments.$inferInsert) {
@@ -242,11 +258,32 @@ export async function listInventoryMovements() {
   return db.select({ id: inventoryMovements.id, itemId: inventoryMovements.itemId, variantId: inventoryMovements.variantId, itemName: inventoryItems.name, variantName: inventoryVariants.name, itemSize: inventoryItems.size, category: inventoryItems.category, unitPriceCents: inventoryVariants.unitPriceCents, fallbackUnitPriceCents: inventoryItems.unitPriceCents, type: inventoryMovements.type, quantity: inventoryMovements.quantity, reason: inventoryMovements.reason, createdAt: inventoryMovements.createdAt }).from(inventoryMovements).leftJoin(inventoryItems, eq(inventoryMovements.itemId, inventoryItems.id)).leftJoin(inventoryVariants, eq(inventoryMovements.variantId, inventoryVariants.id)).orderBy(desc(inventoryMovements.createdAt), desc(inventoryMovements.id));
 }
 
-export async function createSale(input: { discountType?: "fixed" | "percentage"; discountValue?: number; paymentMethod?: "cash" | "pix" | "card" | "other"; items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
+export async function createSale(input: { enrollmentId?: number; discountType?: "fixed" | "percentage"; discountValue?: number; paymentMethod?: "cash" | "pix" | "card" | "other"; items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   if (!input.items.length) throw new Error("Adicione pelo menos um item à venda");
   return db.transaction(async tx => {
+    const [profile] = await tx.select().from(schoolProfile).where(eq(schoolProfile.id, 1)).limit(1);
+    let buyerSnapshot: Record<string, unknown> = {};
+    if (input.enrollmentId) {
+      const [selected] = await tx.select({ enrollment: enrollments, student: students }).from(enrollments)
+        .innerJoin(students, eq(enrollments.studentId, students.id))
+        .where(and(eq(enrollments.id, input.enrollmentId), eq(enrollments.status, "active"))).limit(1);
+      if (!selected) throw new TRPCError({ code: "BAD_REQUEST", message: "A matrícula selecionada não está ativa ou não foi encontrada." });
+      const phones = await tx.select({ number: studentPhones.number }).from(studentPhones).where(eq(studentPhones.studentId, selected.student.id)).orderBy(studentPhones.position, studentPhones.id);
+      buyerSnapshot = {
+        enrollmentId: selected.enrollment.id,
+        studentName: selected.student.name,
+        enrollmentNumber: formatEnrollmentNumber(selected.enrollment.id),
+        schoolYear: selected.enrollment.schoolYear,
+        className: selected.enrollment.className,
+        guardianName: selected.student.guardianName,
+        guardianCpf: selected.student.guardianCpf,
+        guardianEmail: selected.student.guardianEmail,
+        guardianAddress: selected.student.address,
+        guardianPhones: JSON.stringify(phones.length ? phones.map(phone => phone.number) : selected.student.guardianPhone ? [selected.student.guardianPhone] : []),
+      };
+    }
     const normalizedItems = Array.from(input.items.reduce((map, line) => {
       const key = `${line.itemId}:${line.variantId}`;
       const previous = map.get(key);
@@ -268,7 +305,9 @@ export async function createSale(input: { discountType?: "fixed" | "percentage";
     const discountCents = Math.min(requestedDiscountCents, subtotalCents);
     const totalCents = subtotalCents - discountCents;
     const paymentMethod = input.paymentMethod ?? "other";
-    await tx.insert(sales).values({ totalCents, discountCents, discountType, paymentMethod });
+    await tx.insert(sales).values({ totalCents, discountCents, discountType, paymentMethod, ...buyerSnapshot,
+      sellerName: profile?.name ?? "Colégio Gestão", sellerCnpj: profile?.cnpj ?? null, sellerAddress: profile?.address ?? null,
+      sellerPhone: profile?.phone ?? null, sellerEmail: profile?.email ?? null, sellerConfigured: profile ? 1 : 0 });
     const createdSale = await tx.select().from(sales).orderBy(desc(sales.id)).limit(1);
     const sale = createdSale[0];
     if (!sale) throw new Error("Não foi possível criar a venda");

@@ -52,3 +52,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Agrupar entradas de cancelamento pelo número da venda, com motivo e cada produto/variante/quantidade; manter entradas avulsas separadas.
 - [x] Verificar matrícula antiga e nova, venda 2+2, cancelamento concorrente e histórico desktop/mobile em banco fictício; executar testes e build.
 - [x] Revisar arquivos e instruções de atualização para o checkpoint e o GitHub privado.
+
+## Venda por matrícula e recibo completo — 26/09/2026
+
+- [x] Criar vínculo opcional com matrícula, dados do responsável e identificação do colégio sem alterar vendas antigas.
+- [ ] Validar matrícula ativa antes de finalizar e salvar dados históricos de comprador e vendedor para recibos estáveis.
+- [ ] Adicionar busca de aluno/matrícula, identificação do colégio editável pelo dono e detalhes da venda.
+- [ ] Gerar recibo simples imprimível com dados do responsável, colégio, produtos, descontos e pagamento, sem inserção insegura de HTML.
+- [ ] Testar migração, vendas legadas, venda vinculada, mudança de dados e visual em desktop e celular.
+- [ ] Salvar checkpoint e sincronizar com o GitHub privado.

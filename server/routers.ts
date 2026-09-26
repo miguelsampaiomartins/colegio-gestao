@@ -17,6 +17,7 @@ import {
   cancelSale,
   createSale,
   createStudent,
+  getSchoolProfile,
   getDashboardStats,
   listEnrollments,
   listIncidents,
@@ -27,6 +28,7 @@ import {
   recordInventoryMovement,
   recordInventoryMovements,
   resolveIncident,
+  saveSchoolProfile,
   updateInventoryVariantPrice,
 } from "./db";
 import { digitsOnly, isValidCpf, normalizeBrazilianPhone } from "./studentValidation";
@@ -106,6 +108,8 @@ export const appRouter = router({
   }),
   school: router({
     dashboard: protectedProcedure.query(() => getDashboardStats()),
+    profile: protectedProcedure.query(() => getSchoolProfile()),
+    updateProfile: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(160), cnpj: z.string().trim().max(18).optional(), address: z.string().trim().max(500).optional(), phone: z.string().trim().max(40).optional(), email: z.string().trim().email().max(320).optional() })).mutation(({ input }) => saveSchoolProfile(input)),
     students: protectedProcedure.query(() => listStudents()),
     addStudent: auditedProcedure.input(studentInput).mutation(({ input }) => createStudent(input)),
     enrollments: protectedProcedure.query(() => listEnrollments()),
@@ -137,7 +141,7 @@ export const appRouter = router({
       .input(z.object({ type: z.enum(["entry", "exit"]), reason: z.string().optional(), items: z.array(z.object({ itemId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => recordInventoryMovements(input)),
     createSale: auditedProcedure
-      .input(z.object({ discountType: z.enum(["fixed", "percentage"]).optional(), discountValue: z.number().min(0).optional(), paymentMethod: z.enum(["cash", "pix", "card", "other"]).optional(), items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
+      .input(z.object({ enrollmentId: z.number().int().positive().optional(), discountType: z.enum(["fixed", "percentage"]).optional(), discountValue: z.number().min(0).optional(), paymentMethod: z.enum(["cash", "pix", "card", "other"]).optional(), items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => createSale(input)),
     cancelSale: auditedProcedure
       .input(z.object({ saleId: z.number().int().positive() }))

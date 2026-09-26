@@ -78,6 +78,13 @@
       "when": 1790425056058,
       "tag": "0010_right_luke_cage",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1790437466702,
+      "tag": "0011_lucky_obadiah_stane",
+      "breakpoints": true
     }
   ]
 }

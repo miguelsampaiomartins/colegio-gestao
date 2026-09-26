@@ -78,7 +78,7 @@ function DashboardLayoutContent({ children, collapsed, setCollapsed, sidebarWidt
   const [resizing, setResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  const adminMenu = user?.localRole === "owner" ? [{ icon: ShieldCheck, label: "Equipe e acessos", path: "/equipe" }, { icon: DatabaseBackup, label: "Auditoria e backups", path: "/auditoria" }] : [];
+  const adminMenu = user?.localRole === "owner" ? [{ icon: ShieldCheck, label: "Equipe e acessos", path: "/equipe" }, { icon: GraduationCap, label: "Dados do colégio", path: "/dados-colegio" }, { icon: DatabaseBackup, label: "Auditoria e backups", path: "/auditoria" }] : [];
   const accountMenu = user?.localRole ? [{ icon: KeyRound, label: "Minha conta", path: "/minha-conta" }] : [];
   const activeItem = [...menuItems, ...adminMenu, ...accountMenu].find(item => item.path === location) ?? menuItems[0];
 

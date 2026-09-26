@@ -128,6 +128,34 @@ export const sales = mysqlTable("sales", {
   status: mysqlEnum("status", ["completed", "cancelled"]).default("completed").notNull(),
   cancelledAt: timestamp("cancelledAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  /** Optional enrollment and the buyer/seller as they were at checkout. Existing sales remain null. */
+  enrollmentId: int("enrollmentId"),
+  studentName: varchar("studentName", { length: 160 }),
+  enrollmentNumber: varchar("enrollmentNumber", { length: 24 }),
+  schoolYear: varchar("schoolYear", { length: 9 }),
+  className: varchar("className", { length: 80 }),
+  guardianName: varchar("guardianName", { length: 160 }),
+  guardianCpf: varchar("guardianCpf", { length: 11 }),
+  guardianEmail: varchar("guardianEmail", { length: 320 }),
+  guardianAddress: text("guardianAddress"),
+  guardianPhones: text("guardianPhones"),
+  sellerName: varchar("sellerName", { length: 160 }),
+  sellerCnpj: varchar("sellerCnpj", { length: 14 }),
+  sellerAddress: text("sellerAddress"),
+  sellerPhone: varchar("sellerPhone", { length: 20 }),
+  sellerEmail: varchar("sellerEmail", { length: 320 }),
+  sellerConfigured: int("sellerConfigured").default(0).notNull(),
+});
+
+/** Name and optional contact details printed on new receipts; only the owner may edit. */
+export const schoolProfile = mysqlTable("schoolProfile", {
+  id: int("id").primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  cnpj: varchar("cnpj", { length: 14 }),
+  address: text("address"),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 320 }),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export const saleItems = mysqlTable("saleItems", {
