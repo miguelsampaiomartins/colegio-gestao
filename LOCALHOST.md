@@ -31,7 +31,7 @@ Esse comando adiciona a tabela `staffAccounts` e o controle de dono único. Se f
 pnpm.cmd owner:init
 ```
 
-O assistente pergunta seu nome completo, **somente** os quatro primeiros dígitos do CPF e uma senha de 15 a 128 caracteres. Digite a senha no próprio terminal (não nesta conversa). Seu usuário será primeiro nome sem acento + quatro dígitos, por exemplo `miguel1234`. O programa não pede nem guarda o CPF inteiro, não exibe a senha e **não cria um segundo dono**. Se já existir um dono, o comando avisa e não altera sua senha.
+O assistente pergunta seu nome completo, **somente** os quatro primeiros dígitos do CPF e uma senha de 8 a 128 caracteres. Digite a senha no próprio terminal (não nesta conversa). Seu usuário será primeiro nome sem acento + quatro dígitos, por exemplo `miguel1234`. O programa não pede nem guarda o CPF inteiro, não exibe a senha e **não cria um segundo dono**. Se já existir um dono, o comando avisa e não altera sua senha.
 
 > Os quatro dígitos servem **apenas para compor o nome de usuário**; não são um fator de segurança. Escolha uma senha longa e exclusiva.
 

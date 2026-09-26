@@ -29,7 +29,8 @@ describe("login por senha", () => {
     expect(await verifyPassword("senha incorreta grande", first)).toBe(false);
     expect(await verifyPassword("uma frase longa de teste 123", "scrypt$invalid")).toBe(false);
     expect(() => makeUsername("A", "0000")).toThrow();
-    await expect(hashPassword("curta")).rejects.toThrow();
+    await expect(hashPassword("12345678")).resolves.toMatch(/^scrypt\$/);
+    await expect(hashPassword("1234567")).rejects.toThrow();
   });
   it("exige uma chave longa e oferece um cookie de sessão separado do Google", async () => {
     vi.stubEnv("VITE_AUTH_PROVIDER", "password");

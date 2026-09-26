@@ -23,8 +23,8 @@ async function main() {
   const cpfFirstFour = await input({ message: "Somente os quatro primeiros dígitos do CPF:", validate: value => /^\d{4}$/.test(value) || "Digite exatamente quatro dígitos." });
   const username = makeUsername(firstName, cpfFirstFour);
   console.log(`Nome de usuário: ${username}`);
-  const initialPassword = await password({ message: "Crie uma senha forte (15 a 128 caracteres):", validate: value => {
-    try { validateNewPassword(value); return true; } catch { return "Use de 15 a 128 caracteres."; }
+  const initialPassword = await password({ message: "Crie uma senha forte (8 a 128 caracteres):", validate: value => {
+    try { validateNewPassword(value); return true; } catch { return "Use de 8 a 128 caracteres."; }
   } });
   const repeat = await password({ message: "Repita a senha:", validate: value => value === initialPassword || "As senhas não coincidem." });
   if (!repeat || !await confirm({ message: `Criar a conta ${username} neste banco local?`, default: false })) {

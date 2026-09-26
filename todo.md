@@ -5,7 +5,7 @@
 - [x] Tabela separada `staffAccounts` e migrações aditivas, sem alteração dos dados escolares.
 - [x] Assistente `pnpm owner:init` para criar uma única conta de dono no banco local, com senha oculta.
 - [x] Nome de usuário = primeiro nome sem acento + quatro primeiros dígitos informados do CPF; CPF completo não é solicitado nem armazenado.
-- [x] Senhas com hash scrypt e salt aleatório, mínimo de 15 caracteres; bloqueio temporário após erros repetidos.
+- [x] Senhas com hash scrypt e salt aleatório, mínimo de 8 caracteres; bloqueio temporário após erros repetidos.
 - [x] Sessões de senha separadas de Google/Manus, revogadas após remover acesso ou alterar senha.
 - [x] Rotas da equipe protegidas no servidor pelo papel de dono, não apenas escondidas na interface.
 - [x] Painel para cadastrar, desativar, reativar e trocar senha dos funcionários; Minha conta para trocar a própria senha.
@@ -70,3 +70,10 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Reativar o estoque mínimo com edição por produto e alerta visual de necessidade de reposição.
 - [x] Criar categorias de produtos pelo dono e usá-las no cadastro de estoque.
 - [x] Aplicar migração aditiva `0012_sticky_vargas.sql`, executar 32 testes, TypeScript, build e verificação visual desktop/mobile.
+
+
+## Política de senha — 26/09/2026
+
+- [x] Reduzir o mínimo de novas senhas de 15 para 8 caracteres em cadastro, troca e recuperação do dono.
+- [x] Atualizar validações de backend, scripts de terminal, formulários e documentação.
+- [x] Confirmar que 8 caracteres são aceitos, 7 são recusados; TypeScript, 34 testes e build aprovados.

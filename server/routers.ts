@@ -84,7 +84,7 @@ export const appRouter = router({
         await safeRecordAction(user, account.role, "auth.login");
         return { success: true } as const;
       }),
-    changePassword: auditedProcedure.input(z.object({ currentPassword: z.string().min(1).max(128), newPassword: z.string().min(15).max(128) }))
+    changePassword: auditedProcedure.input(z.object({ currentPassword: z.string().min(1).max(128), newPassword: z.string().min(8).max(128) }))
       .mutation(async ({ ctx, input }) => {
         if (!localModeEnabled()) throw new TRPCError({ code: "FORBIDDEN" });
         await changeOwnPassword(ctx.user.id, input.currentPassword, input.newPassword);
@@ -107,11 +107,11 @@ export const appRouter = router({
     roles: ownerProcedure.query(() => listStaffRoles()),
     createRole: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(80), permissions: z.array(z.enum(["dashboard", "students", "inventory", "sales", "incidents"])) })).mutation(({ input }) => createStaffRole(input)),
     updateRole: ownerProcedure.input(z.object({ id: z.number().int().positive(), name: z.string().trim().min(2).max(80), permissions: z.array(z.enum(["dashboard", "students", "inventory", "sales", "incidents"])) })).mutation(({ input }) => updateStaffRole(input)),
-    create: ownerProcedure.input(z.object({ firstName: z.string().min(2).max(80), cpfFirstFour: z.string().regex(/^\d{4}$/), fullName: z.string().min(2).max(160), roleId: z.number().int().positive(), password: z.string().min(15).max(128) }))
+    create: ownerProcedure.input(z.object({ firstName: z.string().min(2).max(80), cpfFirstFour: z.string().regex(/^\d{4}$/), fullName: z.string().min(2).max(160), roleId: z.number().int().positive(), password: z.string().min(8).max(128) }))
       .mutation(({ input }) => addStaff(input)),
     setActive: ownerProcedure.input(z.object({ id: z.number().int().positive(), active: z.boolean() }))
       .mutation(({ input }) => setStaffActive(input.id, input.active)),
-    resetPassword: ownerProcedure.input(z.object({ targetId: z.number().int().positive(), ownerPassword: z.string().min(1).max(128), newPassword: z.string().min(15).max(128) }))
+    resetPassword: ownerProcedure.input(z.object({ targetId: z.number().int().positive(), ownerPassword: z.string().min(1).max(128), newPassword: z.string().min(8).max(128) }))
       .mutation(({ ctx, input }) => resetStaffPassword({ ...input, ownerUserId: ctx.user.id })),
   }),
   audit: router({

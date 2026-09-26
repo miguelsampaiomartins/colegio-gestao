@@ -43,8 +43,8 @@ export function makeUsername(firstName: string, cpfFirstFour: string) {
 }
 
 export function validateNewPassword(value: string) {
-  if (value.length < 15 || value.length > 128 || Buffer.byteLength(value) > 256) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "A senha deve ter entre 15 e 128 caracteres (máximo de 256 bytes)." });
+  if (value.length < 8 || value.length > 128 || Buffer.byteLength(value) > 256) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "A senha deve ter entre 8 e 128 caracteres (máximo de 256 bytes)." });
   }
   return value;
 }

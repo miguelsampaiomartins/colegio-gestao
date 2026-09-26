@@ -21,8 +21,8 @@ async function main() {
     console.log("Operação cancelada. Nenhuma senha foi alterada.");
     return;
   }
-  const newPassword = await password({ message: "Nova senha (15 a 128 caracteres):", validate: value => {
-    try { validateNewPassword(value); return true; } catch { return "Use uma senha de 15 a 128 caracteres."; }
+  const newPassword = await password({ message: "Nova senha (8 a 128 caracteres):", validate: value => {
+    try { validateNewPassword(value); return true; } catch { return "Use uma senha de 8 a 128 caracteres."; }
   } });
   const repeated = await password({ message: "Repita a nova senha:", validate: value => value === newPassword || "As senhas não coincidem." });
   if (repeated !== newPassword || !await confirm({ message: "Redefinir a senha deste dono e encerrar sessões antigas?", default: false })) {
