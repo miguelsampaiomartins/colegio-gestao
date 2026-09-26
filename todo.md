@@ -36,3 +36,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Mostrar histórico e últimas execuções somente ao dono.
 - [x] Testar migração, backup/restauração verificável, falha de exportação e permissões com banco isolado.
 - [x] Escrever e revisar os guias de ativação no Windows, verificação e recuperação em banco de teste.
+
+## Redesign do painel — 26/09/2026
+
+- [x] Refinar identidade visual, navegação, acessibilidade e tela de entrada.
+- [x] Redesenhar a visão geral com indicadores, estados claros e ações móveis.
+- [x] Melhorar leitura, contraste, estados vazios e modais nas telas operacionais.
+- [x] Testar login, formulários, vendas, relatórios e layout em desktop/celular sem alterar regras de negócio.
+- [x] Preparar arquivos revisados e guia do projeto para um checkpoint recuperável.

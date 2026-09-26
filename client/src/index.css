@@ -36,38 +36,38 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
-  --primary: #14877e;
+  --primary: #0e756c;
   --primary-foreground: #ffffff;
-  --sidebar-primary: #14877e;
-  --sidebar-primary-foreground: #ffffff;
-  --radius: 0.75rem;
-  --background: #f7f7f3;
-  --foreground: #12233f;
-  --card: #fffefb;
-  --card-foreground: #12233f;
-  --popover: #fffefb;
-  --popover-foreground: #12233f;
-  --secondary: #eef3f1;
-  --secondary-foreground: #526374;
-  --muted: #f1f4f3;
-  --muted-foreground: #778592;
-  --accent: #e8f3f1;
-  --accent-foreground: #147a73;
-  --destructive: #c75d5d;
+  --sidebar-primary: #bce9d6;
+  --sidebar-primary-foreground: #102c35;
+  --radius: 0.875rem;
+  --background: #f6f7f4;
+  --foreground: #172b38;
+  --card: #ffffff;
+  --card-foreground: #172b38;
+  --popover: #ffffff;
+  --popover-foreground: #172b38;
+  --secondary: #edf3ef;
+  --secondary-foreground: #3b5b57;
+  --muted: #f1f4f1;
+  --muted-foreground: #5f7380;
+  --accent: #e2f2e9;
+  --accent-foreground: #13675e;
+  --destructive: #b8574e;
   --destructive-foreground: #ffffff;
-  --border: #dfe7e5;
-  --input: #dfe7e5;
-  --ring: #8ccfc2;
-  --sidebar: #fffefb;
-  --sidebar-foreground: #12233f;
-  --sidebar-accent: #e8f3f1;
-  --sidebar-accent-foreground: #147a73;
-  --sidebar-border: #dfe7e5;
-  --sidebar-ring: #8ccfc2;
+  --border: #dfe8e3;
+  --input: #cfddd6;
+  --ring: #429c86;
+  --sidebar: #102b34;
+  --sidebar-foreground: #e4efe9;
+  --sidebar-accent: #254b4a;
+  --sidebar-accent-foreground: #eefaf3;
+  --sidebar-border: #315155;
+  --sidebar-ring: #97d9bb;
 }
 
 @layer base {
@@ -78,9 +78,44 @@
 }
 
 @layer components {
-  .font-display { font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; }
+  .font-display { font-family: "Outfit", ui-sans-serif, system-ui, sans-serif; }
   .container { width: 100%; margin-inline: auto; padding-inline: 1rem; }
   .flex { min-height: 0; min-width: 0; }
   @media (min-width: 640px) { .container { padding-inline: 1.5rem; } }
   @media (min-width: 1024px) { .container { padding-inline: 2rem; max-width: 1280px; } }
+}
+
+.school-surface {
+  background: radial-gradient(circle at 95% 2%, rgba(145, 208, 174, .12), transparent 26rem), #f6f7f4;
+}
+.school-sidebar {
+  background: radial-gradient(circle at 12% 4%, rgba(121, 194, 159, .15), transparent 16rem), linear-gradient(165deg, #152f39 0%, #102b34 52%, #0b2630 100%);
+}
+.school-main [data-slot="card"] {
+  border-radius: 1.25rem;
+}
+.school-main input:not([type="checkbox"]):not([type="radio"]),
+.school-main textarea,
+.school-main select {
+  font-size: max(13px, .8125rem);
+}
+.school-main button:focus-visible,
+.school-main a:focus-visible,
+.school-main input:focus-visible,
+.school-main textarea:focus-visible,
+.school-main select:focus-visible,
+.school-sidebar button:focus-visible,
+.school-login button:focus-visible,
+.school-login input:focus-visible {
+  outline: 2px solid #38a28c;
+  outline-offset: 3px;
+}
+.school-main button:not(:disabled), .school-sidebar button:not(:disabled), .school-login button:not(:disabled) {
+  transition: transform 160ms cubic-bezier(.23, 1, .32, 1), background-color 160ms cubic-bezier(.23, 1, .32, 1), border-color 160ms cubic-bezier(.23, 1, .32, 1), color 160ms cubic-bezier(.23, 1, .32, 1);
+}
+.school-main button:not(:disabled):active, .school-sidebar button:not(:disabled):active, .school-login button:not(:disabled):active {
+  transform: scale(.985);
+}
+@media (prefers-reduced-motion: reduce) {
+  .school-main *, .school-sidebar *, .school-login * { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }

@@ -82,3 +82,7 @@ Depois de atualizar com `git pull origin main`, pare o servidor e rode `pnpm.cmd
 ### Auditoria e cópia de segurança
 
 Após atualizar o código e repetir `pnpm.cmd db:push`, entre como dono e abra **Auditoria e backups**. A nova página mostra ações concluídas por funcionário (a partir da instalação) e execuções de backup **feitas no seu Windows**. Para gerar a chave, criar a primeira cópia criptografada e, se quiser, agendar uma cópia diária no Windows, siga [BACKUP.md](./BACKUP.md). Nenhuma tarefa é instalada no seu computador a partir desta conversa.
+
+### Atualização visual do painel
+
+O redesign melhora a tela de entrada, a navegação, a visão geral e a legibilidade de alunos, estoque, vendas, anotações e equipe. **Esta alteração visual não modifica o banco nem exige novas dependências.** Se você já aplicou as migrações acima, basta parar o site com **Ctrl+C**, executar `git pull origin main` na pasta do projeto e iniciar `pnpm.cmd dev` novamente. Confira o menu no celular, os botões de cadastro e o carrinho. Se os estilos antigos permanecerem, atualize a aba do navegador com **Ctrl+F5**. Não publique os dados reais ou o banco de testes usados em capturas de tela.
