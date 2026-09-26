@@ -11,7 +11,11 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
-    "owner:init": "tsx scripts/create-owner.ts"
+    "owner:init": "tsx scripts/create-owner.ts",
+    "backup:keygen": "tsx scripts/backup.ts keygen",
+    "backup:run": "tsx scripts/backup.ts run",
+    "backup:verify": "tsx scripts/backup.ts verify",
+    "backup:restore:test": "tsx scripts/backup.ts restore:test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

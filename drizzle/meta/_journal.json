@@ -71,6 +71,13 @@
       "when": 1790423816881,
       "tag": "0009_loose_sally_floyd",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1790425056058,
+      "tag": "0010_right_luke_cage",
+      "breakpoints": true
     }
   ]
 }

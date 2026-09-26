@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import {
   Archive,
+  DatabaseBackup,
   BookOpenCheck,
   ChevronRight,
   ClipboardList,
@@ -110,6 +111,7 @@ function DashboardLayoutContent({
   const visibleMenu = [
     ...menuItems,
     ...(user?.localRole === "owner" ? [{ icon: ShieldCheck, label: "Equipe e acessos", path: "/equipe" }] : []),
+    ...(user?.localRole === "owner" ? [{ icon: DatabaseBackup, label: "Auditoria e backups", path: "/auditoria" }] : []),
     ...(user?.localRole ? [{ icon: KeyRound, label: "Minha conta", path: "/minha-conta" }] : []),
   ];
   const activeItem = visibleMenu.find(item => item.path === location) ?? menuItems[0];

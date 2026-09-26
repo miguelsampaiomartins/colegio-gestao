@@ -78,3 +78,7 @@ Para verificar o código: `pnpm.cmd check`, `pnpm.cmd test` e `pnpm.cmd build` d
 ### Novos dados de matrícula
 
 Depois de atualizar com `git pull origin main`, pare o servidor e rode `pnpm.cmd db:push` no mesmo banco local antes de iniciar o site. A migração acrescenta CPF do aluno, CPF do responsável, endereço e e-mail, além de uma tabela para vários telefones; os cadastros antigos permanecem e exibem campos faltantes como **não informados**. O CPF completo é dado pessoal: antes de cadastrar CPFs reais, ative o modo `VITE_AUTH_PROVIDER=password`, crie os acessos autorizados e mantenha o banco protegido e com backup. Na cópia hospedada que ainda usa o login antigo, **não cadastre dados reais antes de revisar e restringir os acessos**.
+
+### Auditoria e cópia de segurança
+
+Após atualizar o código e repetir `pnpm.cmd db:push`, entre como dono e abra **Auditoria e backups**. A nova página mostra ações concluídas por funcionário (a partir da instalação) e execuções de backup **feitas no seu Windows**. Para gerar a chave, criar a primeira cópia criptografada e, se quiser, agendar uma cópia diária no Windows, siga [BACKUP.md](./BACKUP.md). Nenhuma tarefa é instalada no seu computador a partir desta conversa.

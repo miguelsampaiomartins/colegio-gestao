@@ -1,4 +1,4 @@
-import { bigint, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { bigint, index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /** Core user table backing Manus authentication. */
 export const users = mysqlTable("users", {
@@ -29,6 +29,30 @@ export const staffAccounts = mysqlTable("staffAccounts", {
   lockedUntil: bigint("lockedUntil", { mode: "number" }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+/** Append-only operational events. Never store passwords, CPF, address, or request bodies here. */
+export const auditEvents = mysqlTable("auditEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  actorUserId: int("actorUserId").notNull(),
+  actorName: varchar("actorName", { length: 160 }).notNull(),
+  actorRole: mysqlEnum("actorRole", ["owner", "staff"]).notNull(),
+  action: varchar("action", { length: 64 }).notNull(),
+  targetType: varchar("targetType", { length: 64 }),
+  targetId: int("targetId"),
+  summary: varchar("summary", { length: 240 }).notNull(),
+  occurredAt: bigint("occurredAt", { mode: "number" }).notNull(),
+}, table => [index("audit_actor_time_idx").on(table.actorUserId, table.occurredAt)]);
+
+/** Diagnostic metadata only: actual encrypted dumps reside outside the project tree. */
+export const backupRuns = mysqlTable("backupRuns", {
+  id: int("id").autoincrement().primaryKey(),
+  status: mysqlEnum("status", ["success", "failure"]).notNull(),
+  filename: varchar("filename", { length: 255 }),
+  bytes: bigint("bytes", { mode: "number" }),
+  message: varchar("message", { length: 240 }),
+  startedAt: bigint("startedAt", { mode: "number" }).notNull(),
+  finishedAt: bigint("finishedAt", { mode: "number" }).notNull(),
 });
 
 export const students = mysqlTable("students", {

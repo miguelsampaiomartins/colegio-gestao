@@ -18,7 +18,7 @@ Parar o servidor local, atualizar o clone, aplicar a migração com `pnpm.cmd db
 
 ## Antes de produção
 
-Implementar backup e recuperação do banco, HTTPS caso o sistema fique disponível em outros computadores e limitação de tentativas compartilhada entre instâncias se for publicado em hospedagem distribuída. O acesso do funcionário cobre as telas operacionais, não a gestão dos membros.
+Os backups locais criptografados e o teste de recuperação estão implementados; o agendamento no computador do proprietário precisa ser ativado por ele. Se o sistema ficar disponível em outros computadores, ainda será necessário HTTPS e limitação de tentativas compartilhada entre instâncias. Funcionários acessam telas operacionais, não a gestão de membros nem o histórico administrativo.
 
 ## Cadastro e saídas por venda — atualização de 26/09/2026
 
@@ -27,3 +27,12 @@ Implementar backup e recuperação do banco, HTTPS caso o sistema fique disponí
 - [x] Agrupar as saídas de estoque pelo número da venda com linhas de produto, variedade e quantidade, preservando entradas comuns.
 - [x] Revisar migração e executar teste de integração de cadastro, legado, venda 2+2 e cancelamento em banco descartável.
 - [x] Salvar checkpoint e atualizar o GitHub privado (versão `2784f7ab`).
+
+## Auditoria e backup local — atualização de 26/09/2026
+
+- [x] Criar tabelas aditivas de ações por funcionário e execuções de backup.
+- [x] Registrar login, mudanças de equipe, alunos, estoque, vendas e anotações sem senhas nem CPFs nos eventos.
+- [x] Preparar backup criptografado, verificação de integridade e instalação opcional de agendamento diário no Windows.
+- [x] Mostrar histórico e últimas execuções somente ao dono.
+- [x] Testar migração, backup/restauração verificável, falha de exportação e permissões com banco isolado.
+- [x] Escrever e revisar os guias de ativação no Windows, verificação e recuperação em banco de teste.
