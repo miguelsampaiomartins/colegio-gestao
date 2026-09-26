@@ -27,6 +27,7 @@ import {
   listInventory,
   listInventoryMovements,
   listSales,
+  listSalesByStudent,
   listStudents,
   listInventoryCategories,
   recordInventoryMovement,
@@ -145,6 +146,7 @@ export const appRouter = router({
     deleteInventoryProduct: permissionProcedure("inventory").input(z.object({ itemId: z.number().int().positive() })).mutation(({ input }) => deleteInventoryProduct(input.itemId)),
     inventoryHistory: permissionProcedure("inventory").query(() => listInventoryMovements()),
     sales: permissionProcedure("sales").query(() => listSales()),
+    salesByStudent: permissionProcedure("sales").input(z.object({ studentId: z.number().int().positive() })).query(({ input }) => listSalesByStudent(input.studentId)),
     addInventoryProduct: permissionProcedure("inventory")
       .input(z.object({ name: z.string().min(2), category: z.string().trim().min(2).max(80), minQuantity: z.number().int().min(0).max(100000), variants: z.array(z.object({ name: z.string().min(1), quantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) })).min(1).max(10) }))
       .mutation(({ input }) => createInventoryProduct(input)),

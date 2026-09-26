@@ -117,3 +117,7 @@ Na aba **Estoque**, o cadastro aceita uma categoria criada pelo dono e um **esto
 Na aba **Estoque**, o dono ou funcionário com permissão de estoque pode clicar em **Excluir** em um produto e confirmar a operação. O produto é arquivado: deixa de aparecer no catálogo e não pode ser vendido ou movimentado, mas suas variedades, vendas anteriores, movimentações e recibos continuam preservados para consulta.
 
 Na aba **Equipe e acessos**, somente o dono pode clicar em **Excluir funcionário** e confirmar. A conta e o acesso são removidos definitivamente, as sessões deixam de funcionar e o histórico geral de auditoria é preservado. O dono não pode ser excluído por esse painel. Use a remoção de acesso quando quiser apenas bloquear temporariamente e manter a conta para reativação posterior.
+
+### Pesquisa e histórico de compras por aluno
+
+Na aba **Vendas**, use o campo “Buscar aluno, matrícula ou turma” para localizar rapidamente o aluno antes de finalizar a venda. Para consultar compras anteriores, use a seção **Histórico de compras por aluno**, pesquise pelo nome e selecione o aluno. O sistema reúne todas as vendas vinculadas às matrículas desse aluno, inclusive vendas canceladas, mostrando data, pagamento, valor e acesso aos detalhes/recibo.

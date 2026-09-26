@@ -407,6 +407,20 @@ export async function listSales() {
   }));
 }
 
+/** Returns the complete purchase history for a student across all of their enrollments. */
+export async function listSalesByStudent(studentId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const studentEnrollments = await db.select({ id: enrollments.id }).from(enrollments).where(eq(enrollments.studentId, studentId));
+  const enrollmentIds = studentEnrollments.map(enrollment => enrollment.id);
+  if (!enrollmentIds.length) return [];
+  const rows = await db.select().from(sales).where(inArray(sales.enrollmentId, enrollmentIds)).orderBy(desc(sales.createdAt), desc(sales.id));
+  return Promise.all(rows.map(async sale => {
+    const items = await db.select({ itemName: inventoryItems.name, variantName: inventoryVariants.name, quantity: saleItems.quantity, unitPriceCents: saleItems.unitPriceCents, totalCents: saleItems.totalCents }).from(saleItems).leftJoin(inventoryItems, eq(saleItems.itemId, inventoryItems.id)).leftJoin(inventoryVariants, eq(saleItems.variantId, inventoryVariants.id)).where(eq(saleItems.saleId, sale.id)).orderBy(saleItems.id);
+    return { ...sale, items };
+  }));
+}
+
 export async function cancelSale(saleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");

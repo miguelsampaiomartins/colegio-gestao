@@ -86,3 +86,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Adicionar exclusão definitiva de funcionários apenas pelo dono, sem permitir exclusão do dono e preservando auditoria.
 - [x] Incluir confirmações visíveis, mensagens claras e registrar as ações no histórico de auditoria.
 - [x] Aplicar migração aditiva `0013_rich_lyja.sql`, executar 35 testes, TypeScript, build e verificação visual desktop/mobile.
+
+
+## Histórico de compras por aluno — 26/09/2026
+
+- [x] Manter a pesquisa de aluno/matrícula/turma no checkout para selecionar o destinatário da venda.
+- [x] Criar consulta protegida que reúne vendas de todas as matrículas do aluno, sem limitar aos 30 registros gerais.
+- [x] Adicionar painel de pesquisa por nome, total comprado, status, data, pagamento, valor, detalhes e recibo.
+- [x] Preservar vendas legadas e incluir vendas canceladas no histórico individual.
+- [x] Validar TypeScript, 35 testes, build e visual desktop/mobile.
