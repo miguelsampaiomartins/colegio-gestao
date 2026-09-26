@@ -11,13 +11,14 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Archive, ArrowUpRight, CalendarDays, ChevronRight, ClipboardList, DatabaseBackup, GraduationCap, KeyRound, LayoutDashboard, LogIn, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldCheck, ShoppingCart, Sparkles, UsersRound, X } from "lucide-react";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
+import type { PermissionKey } from "@/../../shared/permissions";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Visão geral", path: "/" },
-  { icon: UsersRound, label: "Alunos e matrículas", path: "/alunos" },
-  { icon: Archive, label: "Estoque", path: "/estoque" },
-  { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
-  { icon: ClipboardList, label: "Anotações", path: "/anotacoes" },
+  { icon: LayoutDashboard, label: "Visão geral", path: "/", permission: "dashboard" as PermissionKey },
+  { icon: UsersRound, label: "Alunos e matrículas", path: "/alunos", permission: "students" as PermissionKey },
+  { icon: Archive, label: "Estoque", path: "/estoque", permission: "inventory" as PermissionKey },
+  { icon: ShoppingCart, label: "Vendas", path: "/vendas", permission: "sales" as PermissionKey },
+  { icon: ClipboardList, label: "Anotações", path: "/anotacoes", permission: "incidents" as PermissionKey },
 ];
 const SIDEBAR_WIDTH_KEY = "school-sidebar-width";
 const year = new Date().getFullYear();
@@ -78,9 +79,10 @@ function DashboardLayoutContent({ children, collapsed, setCollapsed, sidebarWidt
   const [resizing, setResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const visibleMenuItems = user?.localRole === "staff" ? menuItems.filter(item => user.localPermissions?.includes(item.permission)) : menuItems;
   const adminMenu = user?.localRole === "owner" ? [{ icon: ShieldCheck, label: "Equipe e acessos", path: "/equipe" }, { icon: GraduationCap, label: "Dados do colégio", path: "/dados-colegio" }, { icon: DatabaseBackup, label: "Auditoria e backups", path: "/auditoria" }] : [];
   const accountMenu = user?.localRole ? [{ icon: KeyRound, label: "Minha conta", path: "/minha-conta" }] : [];
-  const activeItem = [...menuItems, ...adminMenu, ...accountMenu].find(item => item.path === location) ?? menuItems[0];
+  const activeItem = [...visibleMenuItems, ...adminMenu, ...accountMenu].find(item => item.path === location) ?? visibleMenuItems[0] ?? menuItems[0];
 
   useEffect(() => {
     const move = (event: MouseEvent) => { if (resizing && !collapsed) { const left = sidebarRef.current?.getBoundingClientRect().left ?? 0; setSidebarWidth(Math.min(340, Math.max(220, event.clientX - left))); } };
@@ -96,7 +98,7 @@ function DashboardLayoutContent({ children, collapsed, setCollapsed, sidebarWidt
     {isMobile && mobileOpen && <button aria-label="Fechar menu" className="fixed inset-0 z-40 bg-[#102b34]/60 backdrop-blur-[2px]" onClick={() => setMobileOpen(false)} />}
     <aside ref={sidebarRef} style={{ width: isMobile ? 280 : collapsed ? 78 : sidebarWidth }} className={cn("school-sidebar fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden border-r border-[#315154] text-white shadow-[10px_0_36px_rgba(6,34,38,.08)]", isMobile && !mobileOpen && "-translate-x-full", isMobile && mobileOpen && "translate-x-0")}>
       <div className="flex h-[84px] items-center gap-3 border-b border-white/10 px-5"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#bce9d6] text-[#11383c]"><GraduationCap className="h-6 w-6" /></span>{(!collapsed || isMobile) && <div className="min-w-0"><p className="truncate font-display text-base font-semibold tracking-tight">Colégio Gestão</p><p className="truncate text-[10px] font-semibold uppercase tracking-[.16em] text-[#a7c6ba]">Gestão escolar</p></div>}{isMobile && <button type="button" aria-label="Fechar menu" onClick={() => setMobileOpen(false)} className="ml-auto rounded-lg p-2 text-[#b8d2c8] hover:bg-white/10"><X className="h-5 w-5" /></button>}{!isMobile && <button type="button" className="ml-auto rounded-lg p-2 text-[#a8c4ba] hover:bg-white/10 hover:text-white" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expandir menu" : "Recolher menu"}>{collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}</button>}</div>
-      <nav className="flex-1 space-y-7 overflow-y-auto px-3 py-6" aria-label="Navegação principal"><div className="space-y-1"><p className={cn("mb-3 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-[#92b2aa]", collapsed && !isMobile && "px-0 text-center")}>{collapsed && !isMobile ? "•" : "Rotina escolar"}</p>{renderMenu(menuItems)}</div>{(adminMenu.length > 0 || accountMenu.length > 0) && <div className="space-y-1 border-t border-white/10 pt-5"><p className={cn("mb-3 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-[#92b2aa]", collapsed && !isMobile && "px-0 text-center")}>{collapsed && !isMobile ? "•" : "Administração"}</p>{renderMenu([...adminMenu, ...accountMenu])}</div>}{(!collapsed || isMobile) && <div className="mx-1 mt-8 rounded-2xl border border-[#89c7ae]/25 bg-[#bce9d6]/10 p-4"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#bce9d6]/20 text-[#bce9d6]"><Sparkles className="h-4 w-4" /></span><p className="mt-3 text-xs font-bold text-white">Sua rotina em ordem</p><p className="mt-1 text-[11px] leading-5 text-[#bad0c6]">Todas as operações do colégio em um só lugar.</p></div>}</nav>
+      <nav className="flex-1 space-y-7 overflow-y-auto px-3 py-6" aria-label="Navegação principal"><div className="space-y-1"><p className={cn("mb-3 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-[#92b2aa]", collapsed && !isMobile && "px-0 text-center")}>{collapsed && !isMobile ? "•" : "Rotina escolar"}</p>{renderMenu(visibleMenuItems)}</div>{(adminMenu.length > 0 || accountMenu.length > 0) && <div className="space-y-1 border-t border-white/10 pt-5"><p className={cn("mb-3 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-[#92b2aa]", collapsed && !isMobile && "px-0 text-center")}>{collapsed && !isMobile ? "•" : "Administração"}</p>{renderMenu([...adminMenu, ...accountMenu] as typeof menuItems)}</div>}{(!collapsed || isMobile) && <div className="mx-1 mt-8 rounded-2xl border border-[#89c7ae]/25 bg-[#bce9d6]/10 p-4"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#bce9d6]/20 text-[#bce9d6]"><Sparkles className="h-4 w-4" /></span><p className="mt-3 text-xs font-bold text-white">Sua rotina em ordem</p><p className="mt-1 text-[11px] leading-5 text-[#bad0c6]">Todas as operações do colégio em um só lugar.</p></div>}</nav>
       <div className="border-t border-white/10 p-3"><div className={cn("flex items-center gap-3 rounded-xl bg-white/5 px-2 py-2.5", collapsed && !isMobile && "justify-center px-0")}><Avatar className="h-9 w-9 border border-white/10"><AvatarFallback className="bg-[#bce9d6] text-xs font-bold text-[#103932]">{user?.name?.slice(0, 1).toUpperCase() ?? "A"}</AvatarFallback></Avatar>{(!collapsed || isMobile) && <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{user?.name ?? "Administrador"}</p><p className="truncate text-[11px] text-[#b2cfc3]">{user?.localRole === "owner" ? "Dono do colégio" : user?.localRole === "staff" ? "Funcionário" : user?.email ?? "Acesso interno"}</p></div>}{(!collapsed || isMobile) && <button type="button" onClick={logout} className="rounded-lg p-2 text-[#b2cfc3] hover:bg-white/10 hover:text-white" aria-label="Sair"><LogOut className="h-4 w-4" /></button>}</div></div>
       {!collapsed && !isMobile && <div className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-[#bce9d6]/40" onMouseDown={() => setResizing(true)} />}
     </aside>

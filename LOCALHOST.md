@@ -103,3 +103,11 @@ O redesign melhora a tela de entrada, a navegação, a visão geral e a legibili
 ### Número de matrícula e devolução após cancelamento
 
 Cada matrícula existente ou nova recebe automaticamente um identificador único e permanente, como `MAT-00000001`, baseado no ID já registrado. Ele aparece nas listas, no cadastro do aluno e na confirmação ao salvar. Ao cancelar uma venda, a aba **Estoque** mostra **uma devolução da venda** com o motivo “cancelamento da venda”, os produtos, as variedades e suas quantidades; a saída original continua registrada separadamente. Esta atualização **não altera o schema**: se você já aplicou as migrações anteriores, basta parar o site, executar `git pull origin main` e reiniciar `pnpm.cmd dev`. Não é necessário rodar `pnpm.cmd db:push` apenas por estas duas mudanças.
+
+### Funções, permissões e estoque configurável
+
+Depois de atualizar o clone, pare o servidor e execute `pnpm.cmd db:push` no mesmo banco local. Essa migração cria as funções personalizadas e as categorias iniciais **Uniforme**, **Livro bimestral** e **Outro**; não apaga produtos, vendas ou funcionários existentes.
+
+Em **Equipe e acessos**, o dono pode criar uma função, marcar os módulos permitidos e depois selecionar essa função ao cadastrar cada funcionário. As opções são **Visão geral**, **Alunos e matrículas**, **Estoque**, **Vendas** e **Anotações**. O bloqueio é aplicado no servidor e também na navegação; o dono continua com acesso total. Funcionários antigos sem função vinculada mantêm temporariamente os acessos operacionais anteriores para evitar perda de acesso durante a atualização.
+
+Na aba **Estoque**, o cadastro aceita uma categoria criada pelo dono e um **estoque mínimo**. Quando a quantidade total de um produto fica igual ou abaixo do mínimo, aparece o alerta de reposição. O mínimo pode ser alterado no próprio cartão do produto e as categorias podem ser criadas na seção “Categorias de produtos”.

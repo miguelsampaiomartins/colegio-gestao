@@ -21,12 +21,22 @@ export const staffAccounts = mysqlTable("staffAccounts", {
   fullName: varchar("fullName", { length: 160 }).notNull(),
   jobTitle: varchar("jobTitle", { length: 120 }).notNull(),
   role: mysqlEnum("role", ["owner", "staff"]).notNull(),
+  roleId: int("roleId"),
   ownerSlot: int("ownerSlot").unique(),
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
   active: int("active").default(1).notNull(),
   sessionVersion: int("sessionVersion").default(1).notNull(),
   failedAttempts: int("failedAttempts").default(0).notNull(),
   lockedUntil: bigint("lockedUntil", { mode: "number" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+/** Custom staff roles created by the owner; permissions are stored as a JSON array. */
+export const staffRoles = mysqlTable("staffRoles", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 80 }).notNull().unique(),
+  permissions: text("permissions").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -90,12 +100,20 @@ export const enrollments = mysqlTable("enrollments", {
 export const inventoryItems = mysqlTable("inventoryItems", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 160 }).notNull(),
-  category: mysqlEnum("category", ["uniform", "book", "other"]).notNull(),
+  category: varchar("category", { length: 80 }).notNull(),
   size: varchar("size", { length: 30 }),
   quantity: int("quantity").default(0).notNull(),
   minQuantity: int("minQuantity").default(5).notNull(),
   unitPriceCents: int("unitPriceCents").default(0).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+/** Product categories managed by the owner. Built-in categories are seeded by migration. */
+export const inventoryCategories = mysqlTable("inventoryCategories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 80 }).notNull().unique(),
+  active: int("active").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 /** Product varieties, limited to 10 in the product registration UI. */

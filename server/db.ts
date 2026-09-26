@@ -5,6 +5,7 @@ import {
   InsertUser,
   enrollments,
   incidents,
+  inventoryCategories,
   inventoryItems,
   inventoryMovements,
   inventoryVariants,
@@ -197,14 +198,43 @@ export async function listInventory() {
   }));
 }
 
-export async function createInventoryProduct(input: { name: string; category: "uniform" | "book" | "other"; variants: Array<{ name: string; quantity: number; unitPriceCents: number }> }) {
+export async function listInventoryCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(inventoryCategories).where(eq(inventoryCategories.active, 1)).orderBy(inventoryCategories.name);
+}
+
+export async function createInventoryCategory(name: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const cleanName = name.trim();
+  if (cleanName.length < 2 || cleanName.length > 80) throw new TRPCError({ code: "BAD_REQUEST", message: "Informe uma categoria entre 2 e 80 caracteres." });
+  try {
+    const [created] = await db.insert(inventoryCategories).values({ name: cleanName });
+    return (await db.select().from(inventoryCategories).where(eq(inventoryCategories.id, created.insertId)).limit(1))[0];
+  } catch (error) {
+    if (typeof error === "object" && error && "code" in error && error.code === "ER_DUP_ENTRY") throw new TRPCError({ code: "CONFLICT", message: "Esta categoria já existe." });
+    throw error;
+  }
+}
+
+export async function updateInventoryMinimum(itemId: number, minQuantity: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.update(inventoryItems).set({ minQuantity, updatedAt: new Date() }).where(eq(inventoryItems.id, itemId));
+  return (await db.select().from(inventoryItems).where(eq(inventoryItems.id, itemId)).limit(1))[0];
+}
+
+export async function createInventoryProduct(input: { name: string; category: string; minQuantity: number; variants: Array<{ name: string; quantity: number; unitPriceCents: number }> }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   if (input.variants.length < 1 || input.variants.length > 10) throw new Error("O produto deve ter entre 1 e 10 variedades");
+  const [category] = await db.select({ id: inventoryCategories.id }).from(inventoryCategories).where(and(eq(inventoryCategories.name, input.category), eq(inventoryCategories.active, 1))).limit(1);
+  if (!category) throw new TRPCError({ code: "BAD_REQUEST", message: "Selecione uma categoria válida." });
   return db.transaction(async tx => {
     const quantity = input.variants.reduce((sum, variant) => sum + variant.quantity, 0);
     const price = input.variants[0]?.unitPriceCents ?? 0;
-    await tx.insert(inventoryItems).values({ name: input.name, category: input.category, quantity, unitPriceCents: price });
+    await tx.insert(inventoryItems).values({ name: input.name, category: input.category, minQuantity: input.minQuantity, quantity, unitPriceCents: price });
     const created = await tx.select().from(inventoryItems).orderBy(desc(inventoryItems.id)).limit(1);
     const item = created[0];
     if (!item) throw new Error("Não foi possível criar o produto");

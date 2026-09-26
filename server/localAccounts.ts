@@ -4,7 +4,8 @@ import { parse as parseCookies } from "cookie";
 import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import { TRPCError } from "@trpc/server";
-import { staffAccounts, users, type User } from "../drizzle/schema";
+import { staffAccounts, staffRoles, users, type User } from "../drizzle/schema";
+import { allStaffPermissions, permissionKeys, type PermissionKey } from "../shared/permissions";
 import { getDb } from "./db";
 import { googleSessionCookieOptions } from "./googleAuth";
 
@@ -24,7 +25,7 @@ const AUDIENCE = "colegio-gestao";
 const invalidLogin = () => new TRPCError({ code: "UNAUTHORIZED", message: "Usuário ou senha inválidos. Tente novamente mais tarde se necessário." });
 
 export type LocalRole = "owner" | "staff";
-export type LocalUser = User & { localRole: LocalRole };
+export type LocalUser = User & { localRole: LocalRole; localPermissions: PermissionKey[] };
 export function localModeEnabled() { return process.env.VITE_AUTH_PROVIDER === "password"; }
 export function localAuthStatus() {
   const missing: string[] = [];
@@ -123,10 +124,19 @@ export async function authenticateLocalRequest(req: Request): Promise<LocalUser 
     const id = Number(payload.sub);
     if (!Number.isSafeInteger(id) || id <= 0 || typeof payload.version !== "number") return null;
     const db = requireDatabase(await getDb());
-    const [row] = await db.select({ account: staffAccounts, user: users }).from(staffAccounts)
-      .innerJoin(users, eq(staffAccounts.userId, users.id)).where(eq(staffAccounts.id, id)).limit(1);
+    const [row] = await db.select({ account: staffAccounts, user: users, role: staffRoles }).from(staffAccounts)
+      .innerJoin(users, eq(staffAccounts.userId, users.id)).leftJoin(staffRoles, eq(staffAccounts.roleId, staffRoles.id)).where(eq(staffAccounts.id, id)).limit(1);
     if (!row || !row.account.active || row.account.sessionVersion !== payload.version || row.user.loginMethod !== "password") return null;
-    return { ...row.user, localRole: row.account.role };
+    let localPermissions: PermissionKey[] = [];
+    if (row.account.role === "owner") localPermissions = allStaffPermissions;
+    else if (!row.account.roleId) localPermissions = allStaffPermissions;
+    else {
+      try {
+        const parsed: unknown = JSON.parse(row.role?.permissions ?? "[]");
+        localPermissions = Array.isArray(parsed) ? parsed.filter((permission): permission is PermissionKey => typeof permission === "string" && permissionKeys.includes(permission as PermissionKey)) : [];
+      } catch { localPermissions = []; }
+    }
+    return { ...row.user, localRole: row.account.role, localPermissions };
   } catch { return null; }
 }
 
@@ -159,26 +169,55 @@ export async function resetOwnerPassword(input: { username: string; newPassword:
   return { username: owner.username, fullName: owner.fullName };
 }
 
+export async function listStaffRoles() {
+  const db = requireDatabase(await getDb());
+  return db.select().from(staffRoles).orderBy(staffRoles.name);
+}
+
+export function normalizeRolePermissions(values: string[]) {
+  return Array.from(new Set(values)).filter(value => permissionKeys.includes(value as PermissionKey));
+}
+
+export async function createStaffRole(input: { name: string; permissions: string[] }) {
+  const db = requireDatabase(await getDb());
+  const name = input.name.trim();
+  if (name.length < 2 || name.length > 80) throw new TRPCError({ code: "BAD_REQUEST", message: "Informe um nome de função entre 2 e 80 caracteres." });
+  try {
+    const [created] = await db.insert(staffRoles).values({ name, permissions: JSON.stringify(normalizeRolePermissions(input.permissions)) });
+    return (await db.select().from(staffRoles).where(eq(staffRoles.id, created.insertId)).limit(1))[0];
+  } catch (error) {
+    if (typeof error === "object" && error && "code" in error && error.code === "ER_DUP_ENTRY") throw new TRPCError({ code: "CONFLICT", message: "Esta função já existe." });
+    throw error;
+  }
+}
+
+export async function updateStaffRole(input: { id: number; name: string; permissions: string[] }) {
+  const db = requireDatabase(await getDb());
+  const name = input.name.trim();
+  if (name.length < 2 || name.length > 80) throw new TRPCError({ code: "BAD_REQUEST", message: "Informe um nome de função entre 2 e 80 caracteres." });
+  await db.update(staffRoles).set({ name, permissions: JSON.stringify(normalizeRolePermissions(input.permissions)), updatedAt: new Date() }).where(eq(staffRoles.id, input.id));
+  return (await db.select().from(staffRoles).where(eq(staffRoles.id, input.id)).limit(1))[0];
+}
+
 export async function listStaff() {
   const db = requireDatabase(await getDb());
   return db.select({ id: staffAccounts.id, username: staffAccounts.username, fullName: staffAccounts.fullName,
-    jobTitle: staffAccounts.jobTitle, active: staffAccounts.active, role: staffAccounts.role, createdAt: staffAccounts.createdAt })
-    .from(staffAccounts).orderBy(staffAccounts.fullName);
+    jobTitle: staffAccounts.jobTitle, active: staffAccounts.active, role: staffAccounts.role, roleId: staffAccounts.roleId,
+    roleName: staffRoles.name, createdAt: staffAccounts.createdAt })
+    .from(staffAccounts).leftJoin(staffRoles, eq(staffAccounts.roleId, staffRoles.id)).orderBy(staffAccounts.fullName);
 }
 
-export async function addStaff(input: { firstName: string; cpfFirstFour: string; fullName: string; jobTitle: string; password: string }) {
+export async function addStaff(input: { firstName: string; cpfFirstFour: string; fullName: string; roleId: number; password: string }) {
   const username = makeUsername(input.firstName, input.cpfFirstFour);
   const fullName = input.fullName.trim();
-  const jobTitle = input.jobTitle.trim();
-  if (fullName.length < 2 || fullName.length > 160 || jobTitle.length < 2 || jobTitle.length > 120) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "Informe nome completo e função válidos." });
-  }
-  const passwordHash = await hashPassword(input.password);
   const db = requireDatabase(await getDb());
+  const [selectedRole] = await db.select().from(staffRoles).where(eq(staffRoles.id, input.roleId)).limit(1);
+  if (fullName.length < 2 || fullName.length > 160 || !selectedRole) throw new TRPCError({ code: "BAD_REQUEST", message: "Informe nome completo e uma função válida." });
+  const passwordHash = await hashPassword(input.password);
   try {
     await db.transaction(async tx => {
       const [inserted] = await tx.insert(users).values({ openId: `local:${randomUUID()}`, name: fullName, role: "user", loginMethod: "password" });
-      await tx.insert(staffAccounts).values({ userId: inserted.insertId, username, fullName, jobTitle, role: "staff", passwordHash });
+      await tx.insert(staffAccounts).values({ userId: inserted.insertId, username, fullName, jobTitle: selectedRole.name, role: "staff", roleId: selectedRole.id, passwordHash });
     });
   } catch (error) {
     if (typeof error === "object" && error && ("code" in error && error.code === "ER_DUP_ENTRY" || "cause" in error && (error.cause as { code?: string })?.code === "ER_DUP_ENTRY")) {

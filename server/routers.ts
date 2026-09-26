@@ -6,7 +6,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { googleAuthStatus, googleSessionCookieOptions } from "./googleAuth";
 import { LOCAL_COOKIE_NAME, addStaff, changeOwnPassword, listStaff, localAuthStatus, localCookieOptions,
-  localModeEnabled, localSessionMaxAge, loginWithPassword, makeLocalSession, resetStaffPassword, setStaffActive } from "./localAccounts";
+  localModeEnabled, localSessionMaxAge, loginWithPassword, makeLocalSession, resetStaffPassword, setStaffActive,
+  listStaffRoles, createStaffRole, updateStaffRole } from "./localAccounts";
 import {
   createEnrollment,
   createIncident,
@@ -17,6 +18,7 @@ import {
   cancelSale,
   createSale,
   createStudent,
+  createInventoryCategory,
   getSchoolProfile,
   getDashboardStats,
   listEnrollments,
@@ -25,14 +27,17 @@ import {
   listInventoryMovements,
   listSales,
   listStudents,
+  listInventoryCategories,
   recordInventoryMovement,
   recordInventoryMovements,
   resolveIncident,
   saveSchoolProfile,
   updateInventoryVariantPrice,
+  updateInventoryMinimum,
 } from "./db";
 import { digitsOnly, isValidCpf, normalizeBrazilianPhone } from "./studentValidation";
 import { actionLabels, listAuditEvents, listBackupRuns, safeRecordAction, safeTargetId } from "./audit";
+import type { PermissionKey } from "../shared/permissions";
 
 const cpfInput = z.string().transform(digitsOnly).refine(isValidCpf, "Informe um CPF válido com 11 dígitos.");
 const phoneInput = z.string().transform(normalizeBrazilianPhone).refine(value => /^[1-9]\d[2-9]\d{7,8}$/.test(value), "Informe um telefone com DDD válido.");
@@ -61,10 +66,15 @@ const ownerProcedure = auditedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
+const permissionProcedure = (permission: PermissionKey) => auditedProcedure.use(({ ctx, next }) => {
+  if (!localModeEnabled() || ctx.localRole === "owner" || ctx.localPermissions?.includes(permission)) return next({ ctx });
+  throw new TRPCError({ code: "FORBIDDEN", message: "Sua função não tem permissão para acessar este módulo." });
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(({ ctx }) => ctx.user ? { ...ctx.user, localRole: ctx.localRole ?? null } : null),
+    me: publicProcedure.query(({ ctx }) => ctx.user ? { ...ctx.user, localRole: ctx.localRole ?? null, localPermissions: ctx.localPermissions ?? [] } : null),
     provider: publicProcedure.query(() => localModeEnabled() ? localAuthStatus() : googleAuthStatus()),
     login: publicProcedure.input(z.object({ username: z.string().min(1).max(64), password: z.string().min(1).max(128) }))
       .mutation(async ({ ctx, input }) => {
@@ -94,7 +104,10 @@ export const appRouter = router({
   }),
   staff: router({
     list: ownerProcedure.query(() => listStaff()),
-    create: ownerProcedure.input(z.object({ firstName: z.string().min(2).max(80), cpfFirstFour: z.string().regex(/^\d{4}$/), fullName: z.string().min(2).max(160), jobTitle: z.string().min(2).max(120), password: z.string().min(15).max(128) }))
+    roles: ownerProcedure.query(() => listStaffRoles()),
+    createRole: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(80), permissions: z.array(z.enum(["dashboard", "students", "inventory", "sales", "incidents"])) })).mutation(({ input }) => createStaffRole(input)),
+    updateRole: ownerProcedure.input(z.object({ id: z.number().int().positive(), name: z.string().trim().min(2).max(80), permissions: z.array(z.enum(["dashboard", "students", "inventory", "sales", "incidents"])) })).mutation(({ input }) => updateStaffRole(input)),
+    create: ownerProcedure.input(z.object({ firstName: z.string().min(2).max(80), cpfFirstFour: z.string().regex(/^\d{4}$/), fullName: z.string().min(2).max(160), roleId: z.number().int().positive(), password: z.string().min(15).max(128) }))
       .mutation(({ input }) => addStaff(input)),
     setActive: ownerProcedure.input(z.object({ id: z.number().int().positive(), active: z.boolean() }))
       .mutation(({ input }) => setStaffActive(input.id, input.active)),
@@ -107,7 +120,7 @@ export const appRouter = router({
     backups: ownerProcedure.query(() => listBackupRuns()),
   }),
   school: router({
-    dashboard: protectedProcedure.query(() => getDashboardStats()),
+    dashboard: permissionProcedure("dashboard").query(() => getDashboardStats()),
     profile: protectedProcedure.query(() => getSchoolProfile()),
     updateProfile: ownerProcedure.input(z.object({
       name: z.string().trim().min(2).max(160),
@@ -116,47 +129,50 @@ export const appRouter = router({
       phone: z.string().trim().max(40).transform(value => value.replace(/\D/g, "")).refine(value => !value || value.length <= 20, "O telefone deve ter no máximo 20 dígitos.").optional(),
       email: z.string().trim().email().max(320).optional(),
     })).mutation(({ input }) => saveSchoolProfile(input)),
-    students: protectedProcedure.query(() => listStudents()),
-    addStudent: auditedProcedure.input(studentInput).mutation(({ input }) => createStudent(input)),
-    enrollments: protectedProcedure.query(() => listEnrollments()),
-    addEnrollment: auditedProcedure
+    students: permissionProcedure("students").query(() => listStudents()),
+    addStudent: permissionProcedure("students").input(studentInput).mutation(({ input }) => createStudent(input)),
+    enrollments: permissionProcedure("students").query(() => listEnrollments()),
+    addEnrollment: permissionProcedure("students")
       .input(z.object({ studentId: z.number().int().positive(), schoolYear: z.string().min(4), className: z.string().min(1), shift: z.enum(["morning", "afternoon", "fulltime"]) }))
       .mutation(({ input }) => createEnrollment(input)),
-    inventory: protectedProcedure.query(() => listInventory()),
-    inventoryHistory: protectedProcedure.query(() => listInventoryMovements()),
-    sales: protectedProcedure.query(() => listSales()),
-    addInventoryProduct: auditedProcedure
-      .input(z.object({ name: z.string().min(2), category: z.enum(["uniform", "book", "other"]), variants: z.array(z.object({ name: z.string().min(1), quantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) })).min(1).max(10) }))
+    inventory: permissionProcedure("inventory").query(() => listInventory()),
+    inventoryCategories: permissionProcedure("inventory").query(() => listInventoryCategories()),
+    createInventoryCategory: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(80) })).mutation(({ input }) => createInventoryCategory(input.name)),
+    updateInventoryMinimum: permissionProcedure("inventory").input(z.object({ itemId: z.number().int().positive(), minQuantity: z.number().int().min(0).max(100000) })).mutation(({ input }) => updateInventoryMinimum(input.itemId, input.minQuantity)),
+    inventoryHistory: permissionProcedure("inventory").query(() => listInventoryMovements()),
+    sales: permissionProcedure("sales").query(() => listSales()),
+    addInventoryProduct: permissionProcedure("inventory")
+      .input(z.object({ name: z.string().min(2), category: z.string().trim().min(2).max(80), minQuantity: z.number().int().min(0).max(100000), variants: z.array(z.object({ name: z.string().min(1), quantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) })).min(1).max(10) }))
       .mutation(({ input }) => createInventoryProduct(input)),
-    addInventoryVariantUnits: auditedProcedure
+    addInventoryVariantUnits: permissionProcedure("inventory")
       .input(z.object({ reason: z.string().optional(), items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => addInventoryVariantUnits(input)),
-    addInventoryVariant: auditedProcedure
+    addInventoryVariant: permissionProcedure("inventory")
       .input(z.object({ itemId: z.number().int().positive(), name: z.string().min(1), quantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) }))
       .mutation(({ input }) => addInventoryVariant(input)),
-    updateInventoryVariantPrice: auditedProcedure
+    updateInventoryVariantPrice: permissionProcedure("inventory")
       .input(z.object({ variantId: z.number().int().positive(), unitPriceCents: z.number().int().min(0) }))
       .mutation(({ input }) => updateInventoryVariantPrice(input)),
-    addInventoryItem: auditedProcedure
+    addInventoryItem: permissionProcedure("inventory")
       .input(z.object({ name: z.string().min(2), category: z.enum(["uniform", "book", "other"]), size: z.string().optional(), quantity: z.number().int().min(0), minQuantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) }))
       .mutation(({ input }) => createInventoryItem(input)),
-    inventoryMovement: auditedProcedure
+    inventoryMovement: permissionProcedure("inventory")
       .input(z.object({ itemId: z.number().int().positive(), type: z.enum(["entry", "exit"]), quantity: z.number().int().positive(), reason: z.string().optional() }))
       .mutation(({ input }) => recordInventoryMovement(input)),
-    inventoryBulkMovement: auditedProcedure
+    inventoryBulkMovement: permissionProcedure("inventory")
       .input(z.object({ type: z.enum(["entry", "exit"]), reason: z.string().optional(), items: z.array(z.object({ itemId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => recordInventoryMovements(input)),
-    createSale: auditedProcedure
+    createSale: permissionProcedure("sales")
       .input(z.object({ enrollmentId: z.number().int().positive().optional(), discountType: z.enum(["fixed", "percentage"]).optional(), discountValue: z.number().min(0).optional(), paymentMethod: z.enum(["cash", "pix", "card", "other"]).optional(), items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => createSale(input)),
-    cancelSale: auditedProcedure
+    cancelSale: permissionProcedure("sales")
       .input(z.object({ saleId: z.number().int().positive() }))
       .mutation(({ input }) => cancelSale(input.saleId)),
-    incidents: protectedProcedure.query(() => listIncidents()),
-    addIncident: auditedProcedure
+    incidents: permissionProcedure("incidents").query(() => listIncidents()),
+    addIncident: permissionProcedure("incidents")
       .input(z.object({ studentId: z.number().int().positive(), type: z.enum(["absence", "late", "homework", "book", "uniform", "behavior", "other"]), note: z.string().min(3) }))
       .mutation(({ input }) => createIncident(input)),
-    resolveIncident: auditedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => resolveIncident(input.id)),
+    resolveIncident: permissionProcedure("incidents").input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => resolveIncident(input.id)),
   }),
 });
 

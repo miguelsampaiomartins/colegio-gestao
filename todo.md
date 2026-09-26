@@ -61,3 +61,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Gerar recibo simples imprimível com dados do responsável, colégio, produtos, descontos e pagamento, sem inserção insegura de HTML.
 - [x] Testar migração, vendas legadas, venda vinculada, mudança de dados e visual em desktop e celular.
 - [x] Salvar checkpoint e sincronizar com o GitHub privado.
+
+## Funções, permissões e estoque configurável — 26/09/2026
+
+- [x] Criar funções personalizadas com permissões por módulo: visão geral, alunos/matrículas, estoque, vendas e anotações.
+- [x] Proteger as rotas no backend conforme a função e filtrar a navegação; o dono mantém acesso total.
+- [x] Permitir selecionar a função ao cadastrar funcionário e editar as permissões de funções existentes.
+- [x] Reativar o estoque mínimo com edição por produto e alerta visual de necessidade de reposição.
+- [x] Criar categorias de produtos pelo dono e usá-las no cadastro de estoque.
+- [x] Aplicar migração aditiva `0012_sticky_vargas.sql`, executar 32 testes, TypeScript, build e verificação visual desktop/mobile.
