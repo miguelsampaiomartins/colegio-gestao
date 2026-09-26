@@ -1,22 +1,80 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { groupInventoryHistory, type InventoryHistoryLine } from "@shared/inventoryHistory";
-import { ArrowDownLeft, ArrowUpRight, Package, ShoppingCart } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Package, RotateCcw, ShoppingCart } from "lucide-react";
 
 const formatCurrency = (cents: number | null | undefined) => ((cents ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const dateTime = (value: Date | string) => new Date(value).toLocaleString("pt-BR");
 
-export function InventoryHistory({ rows, isLoading, isError }: { rows?: InventoryHistoryLine[]; isLoading: boolean; isError: boolean }) {
+type HistoryProps = { rows?: InventoryHistoryLine[]; isLoading: boolean; isError: boolean };
+
+export function InventoryHistory({ rows, isLoading, isError }: HistoryProps) {
   const groups = groupInventoryHistory(rows ?? []);
   return <Card className="border border-[#e4ebe5] bg-white shadow-[0_8px_26px_rgba(27,62,52,.045)]"><CardContent className="p-0">
-    <div className="border-b border-[#edf0ef] px-5 py-5"><h3 className="text-sm font-bold text-[#253b55]">Histórico de movimentações</h3><p className="mt-1 text-xs text-[#647b79]">Uma saída por venda, com produtos e quantidades; entradas avulsas continuam separadas.</p></div>
+    <div className="border-b border-[#edf0ef] px-5 py-5">
+      <h3 className="text-sm font-bold text-[#253b55]">Histórico de movimentações</h3>
+      <p className="mt-1 text-xs text-[#647b79]">Saídas e devoluções agrupadas por venda. Entradas avulsas aparecem separadamente.</p>
+    </div>
     <div className="divide-y divide-[#f0f2f1]">
       {isLoading ? <div className="p-8 text-center text-sm text-[#647b79]">Carregando histórico...</div>
-        : isError ? <div className="p-8 text-center text-sm text-[#b96046]">Não foi possível carregar o histórico. Tente atualizar a página.</div>
-        : groups.length ? groups.map(group => group.kind === "sale" ?
-          <div key={`sale-${group.saleId}`} className="px-5 py-5"><div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start"><div className="flex items-center gap-3"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#fff3ee] text-[#b96046]"><ShoppingCart className="h-4 w-4" /></div><div><div className="flex flex-wrap items-center gap-2"><p className="text-xs font-bold text-[#3b4d60]">Venda #{group.saleId}</p><Badge className="border-0 bg-[#fff3ee] px-2 py-0.5 text-xs font-bold text-[#b96046]">Saída da venda</Badge></div><p className="mt-1 text-xs text-[#647b79]">{dateTime(group.createdAt)}</p></div></div><p className="text-sm font-bold text-[#b96046] sm:text-right">-{group.totalQuantity} un.</p></div><div className="ml-0 mt-3 space-y-2 rounded-xl border border-[#f6e5dc] bg-[#fffaf7] p-3 sm:ml-12">{group.rows.map(row => <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 text-xs"><div className="flex min-w-0 flex-wrap items-center gap-2"><span className="font-bold text-[#3b4d60]">{row.itemName ?? "Produto removido"}</span>{row.variantName && <span className="rounded-md bg-white px-2 py-0.5 text-xs font-semibold text-[#5470aa]">{row.variantName}</span>}</div><span className="font-bold text-[#b96046]">-{row.quantity} un.</span></div>)}</div></div>
-          : <div key={`movement-${group.row.id}`} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center"><div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${group.row.type === "entry" ? "bg-[#e7f4f1] text-[#14877e]" : "bg-[#fff3ee] text-[#b96046]"}`}>{group.row.type === "entry" ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="text-xs font-bold text-[#3b4d60]">{group.row.itemName ?? "Item removido"}</p><Badge className={`border-0 px-2 py-0.5 text-xs font-bold ${group.row.type === "entry" ? "bg-[#e7f4f1] text-[#14877e]" : "bg-[#fff3ee] text-[#b96046]"}`}>{group.row.type === "entry" ? "Entrada" : "Saída"}</Badge>{group.row.variantName && <Badge className="border-0 bg-[#edf1f9] px-2 py-0.5 text-xs font-bold text-[#5470aa]">{group.row.variantName}</Badge>}</div><p className="mt-1 text-xs text-[#5c7371]">{group.row.reason || "Sem motivo informado"} · {formatCurrency(group.row.unitPriceCents ?? group.row.fallbackUnitPriceCents)} por unidade</p></div><div className="text-right"><span className={`block text-sm font-bold ${group.row.type === "entry" ? "text-[#14877e]" : "text-[#b96046]"}`}>{group.row.type === "entry" ? "+" : "-"}{group.row.quantity} un.</span><span className="block text-xs font-semibold text-[#657d78]">{dateTime(group.row.createdAt)}</span></div></div>)
-        : <div className="p-10 text-center"><Package className="mx-auto h-6 w-6 text-[#719087]" /><p className="mt-3 text-sm font-bold text-[#526374]">Nenhuma movimentação registrada</p><p className="mt-1 text-xs text-[#647b79]">As movimentações aparecerão aqui.</p></div>}
+        : isError ? <div role="alert" className="p-8 text-center text-sm text-[#b96046]">Não foi possível carregar o histórico. Tente atualizar a página.</div>
+        : groups.length ? groups.map(group => {
+          if (group.kind !== "single") {
+            const returned = group.kind === "return";
+            return <div key={`${group.kind}-${group.saleId}`} className="px-5 py-5">
+              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                <div className="flex items-center gap-3">
+                  <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${returned ? "bg-[#e7f4f1] text-[#14877e]" : "bg-[#fff3ee] text-[#b96046]"}`}>
+                    {returned ? <RotateCcw className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-bold text-[#3b4d60]">Venda #{group.saleId}</p>
+                      <Badge className={`border-0 px-2 py-0.5 text-xs font-bold ${returned ? "bg-[#e7f4f1] text-[#14877e]" : "bg-[#fff3ee] text-[#b96046]"}`}>
+                        {returned ? "Devolução ao estoque" : "Saída da venda"}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-[#647b79]">{dateTime(group.createdAt)}</p>
+                    {returned && <p className="mt-1 text-xs font-semibold text-[#14877e]">Motivo: cancelamento da venda #{group.saleId}</p>}
+                  </div>
+                </div>
+                <p className={`text-sm font-bold sm:text-right ${returned ? "text-[#14877e]" : "text-[#b96046]"}`}>
+                  {returned ? "+" : "-"}{group.totalQuantity} un.
+                </p>
+              </div>
+              <div className={`ml-0 mt-3 space-y-2 rounded-xl border p-3 sm:ml-12 ${returned ? "border-[#d5ebe2] bg-[#f5fbf7]" : "border-[#f6e5dc] bg-[#fffaf7]"}`}>
+                {group.rows.map(row => <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span className="font-bold text-[#3b4d60]">{row.itemName ?? "Produto removido"}</span>
+                    {row.variantName && <span className="rounded-md bg-white px-2 py-0.5 text-xs font-semibold text-[#5470aa]">{row.variantName}</span>}
+                  </div>
+                  <span className={`font-bold ${returned ? "text-[#14877e]" : "text-[#b96046]"}`}>
+                    {returned ? "+" : "-"}{row.quantity} un.
+                  </span>
+                </div>)}
+              </div>
+            </div>;
+          }
+          const row = group.row;
+          const entry = row.type === "entry";
+          return <div key={`movement-${row.id}`} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+            <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${entry ? "bg-[#e7f4f1] text-[#14877e]" : "bg-[#fff3ee] text-[#b96046]"}`}>
+              {entry ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-bold text-[#3b4d60]">{row.itemName ?? "Item removido"}</p>
+                <Badge className={`border-0 px-2 py-0.5 text-xs font-bold ${entry ? "bg-[#e7f4f1] text-[#14877e]" : "bg-[#fff3ee] text-[#b96046]"}`}>{entry ? "Entrada" : "Saída"}</Badge>
+                {row.variantName && <Badge className="border-0 bg-[#edf1f9] px-2 py-0.5 text-xs font-bold text-[#5470aa]">{row.variantName}</Badge>}
+              </div>
+              <p className="mt-1 text-xs text-[#5c7371]">{row.reason || "Sem motivo informado"} · {formatCurrency(row.unitPriceCents ?? row.fallbackUnitPriceCents)} por unidade</p>
+            </div>
+            <div className="text-right">
+              <span className={`block text-sm font-bold ${entry ? "text-[#14877e]" : "text-[#b96046]"}`}>{entry ? "+" : "-"}{row.quantity} un.</span>
+              <span className="block text-xs font-semibold text-[#657d78]">{dateTime(row.createdAt)}</span>
+            </div>
+          </div>;
+        }) : <div className="p-10 text-center"><Package className="mx-auto h-6 w-6 text-[#719087]" /><p className="mt-3 text-sm font-bold text-[#526374]">Nenhuma movimentação registrada</p><p className="mt-1 text-xs text-[#647b79]">As movimentações aparecerão aqui.</p></div>}
     </div>
   </CardContent></Card>;
 }

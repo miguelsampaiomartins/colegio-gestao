@@ -13,28 +13,30 @@ export type InventoryHistoryLine = {
 };
 
 export type InventoryHistoryGroup<T extends InventoryHistoryLine> =
-  | { kind: "sale"; saleId: number; rows: T[]; totalQuantity: number; createdAt: T["createdAt"] }
+  | { kind: "sale" | "return"; saleId: number; rows: T[]; totalQuantity: number; createdAt: T["createdAt"] }
   | { kind: "single"; row: T };
 
-/** Groups historical stock exits by sale number without changing legacy records. */
+/** Groups sale exits and cancelled-sale returns separately, including legacy movements. */
 export function groupInventoryHistory<T extends InventoryHistoryLine>(rows: readonly T[]): InventoryHistoryGroup<T>[] {
   const groups: InventoryHistoryGroup<T>[] = [];
-  const sales = new Map<number, Extract<InventoryHistoryGroup<T>, { kind: "sale" }>>();
+  const batches = new Map<string, Extract<InventoryHistoryGroup<T>, { saleId: number }>>();
   for (const row of rows) {
-    const match = row.type === "exit" ? /^Venda #(\d+)$/.exec(row.reason ?? "") : null;
+    const kind = row.type === "exit" ? "sale" : "return";
+    const match = row.type === "exit" ? /^Venda #(\d+)$/.exec(row.reason ?? "") : /^Cancelamento da venda #(\d+)$/.exec(row.reason ?? "");
     const saleId = match ? Number(match[1]) : null;
     if (saleId === null || !Number.isSafeInteger(saleId) || saleId <= 0) {
       groups.push({ kind: "single", row });
       continue;
     }
-    let sale = sales.get(saleId);
-    if (!sale) {
-      sale = { kind: "sale", saleId, rows: [], totalQuantity: 0, createdAt: row.createdAt };
-      groups.push(sale);
-      sales.set(saleId, sale);
+    const key = `${kind}:${saleId}`;
+    let batch = batches.get(key);
+    if (!batch) {
+      batch = { kind, saleId, rows: [], totalQuantity: 0, createdAt: row.createdAt };
+      groups.push(batch);
+      batches.set(key, batch);
     }
-    sale.rows.push(row);
-    sale.totalQuantity += row.quantity;
+    batch.rows.push(row);
+    batch.totalQuantity += row.quantity;
   }
   return groups;
 }

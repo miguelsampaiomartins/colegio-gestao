@@ -44,3 +44,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Melhorar leitura, contraste, estados vazios e modais nas telas operacionais.
 - [x] Testar login, formulários, vendas, relatórios e layout em desktop/celular sem alterar regras de negócio.
 - [x] Preparar arquivos revisados e guia do projeto para um checkpoint recuperável.
+
+## Identificação de matrículas e devoluções por cancelamento — 26/09/2026
+
+- [x] Gerar número único de matrícula a partir do ID existente sem renumerar, duplicar ou apagar cadastros.
+- [x] Mostrar o número na lista, no cadastro do aluno, na visão geral e na confirmação de nova matrícula.
+- [x] Agrupar entradas de cancelamento pelo número da venda, com motivo e cada produto/variante/quantidade; manter entradas avulsas separadas.
+- [x] Verificar matrícula antiga e nova, venda 2+2, cancelamento concorrente e histórico desktop/mobile em banco fictício; executar testes e build.
+- [x] Revisar arquivos e instruções de atualização para o checkpoint e o GitHub privado.

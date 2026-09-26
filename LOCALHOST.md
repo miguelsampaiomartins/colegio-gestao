@@ -86,3 +86,7 @@ Após atualizar o código e repetir `pnpm.cmd db:push`, entre como dono e abra *
 ### Atualização visual do painel
 
 O redesign melhora a tela de entrada, a navegação, a visão geral e a legibilidade de alunos, estoque, vendas, anotações e equipe. **Esta alteração visual não modifica o banco nem exige novas dependências.** Se você já aplicou as migrações acima, basta parar o site com **Ctrl+C**, executar `git pull origin main` na pasta do projeto e iniciar `pnpm.cmd dev` novamente. Confira o menu no celular, os botões de cadastro e o carrinho. Se os estilos antigos permanecerem, atualize a aba do navegador com **Ctrl+F5**. Não publique os dados reais ou o banco de testes usados em capturas de tela.
+
+### Número de matrícula e devolução após cancelamento
+
+Cada matrícula existente ou nova recebe automaticamente um identificador único e permanente, como `MAT-00000001`, baseado no ID já registrado. Ele aparece nas listas, no cadastro do aluno e na confirmação ao salvar. Ao cancelar uma venda, a aba **Estoque** mostra **uma devolução da venda** com o motivo “cancelamento da venda”, os produtos, as variedades e suas quantidades; a saída original continua registrada separadamente. Esta atualização **não altera o schema**: se você já aplicou as migrações anteriores, basta parar o site, executar `git pull origin main` e reiniciar `pnpm.cmd dev`. Não é necessário rodar `pnpm.cmd db:push` apenas por estas duas mudanças.

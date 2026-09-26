@@ -14,6 +14,7 @@ import {
   students,
   users,
 } from "../drizzle/schema";
+import { formatEnrollmentNumber } from "../shared/enrollmentNumber";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -114,15 +115,17 @@ export async function createStudent(input: Omit<typeof students.$inferInsert, "g
 export async function listEnrollments() {
   const db = await getDb();
   if (!db) return [];
-  return db.select({ id: enrollments.id, studentId: enrollments.studentId, studentName: students.name, schoolYear: enrollments.schoolYear, className: enrollments.className, shift: enrollments.shift, status: enrollments.status, enrollmentDate: enrollments.enrollmentDate }).from(enrollments).leftJoin(students, eq(enrollments.studentId, students.id)).orderBy(desc(enrollments.enrollmentDate));
+  const rows = await db.select({ id: enrollments.id, studentId: enrollments.studentId, studentName: students.name, schoolYear: enrollments.schoolYear, className: enrollments.className, shift: enrollments.shift, status: enrollments.status, enrollmentDate: enrollments.enrollmentDate }).from(enrollments).leftJoin(students, eq(enrollments.studentId, students.id)).orderBy(desc(enrollments.enrollmentDate), desc(enrollments.id));
+  return rows.map(row => ({ ...row, enrollmentNumber: formatEnrollmentNumber(row.id) }));
 }
 
 export async function createEnrollment(input: typeof enrollments.$inferInsert) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  await db.insert(enrollments).values(input);
-  const rows = await listEnrollments();
-  return rows[0];
+  const [inserted] = await db.insert(enrollments).values(input);
+  const [row] = await db.select({ id: enrollments.id, studentId: enrollments.studentId, studentName: students.name, schoolYear: enrollments.schoolYear, className: enrollments.className, shift: enrollments.shift, status: enrollments.status, enrollmentDate: enrollments.enrollmentDate }).from(enrollments).leftJoin(students, eq(enrollments.studentId, students.id)).where(eq(enrollments.id, inserted.insertId)).limit(1);
+  if (!row) throw new Error("Matrícula criada, mas não foi possível recuperar seus dados.");
+  return { ...row, enrollmentNumber: formatEnrollmentNumber(row.id) };
 }
 
 export async function listInventory() {
@@ -293,17 +296,17 @@ export async function cancelSale(saleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   return db.transaction(async tx => {
-    const saleRows = await tx.select().from(sales).where(eq(sales.id, saleId)).limit(1);
-    const sale = saleRows[0];
-    if (!sale) throw new Error("Venda não encontrada");
-    if (sale.status === "cancelled") throw new Error("Esta venda já foi cancelada");
+    const [claimed] = await tx.update(sales).set({ status: "cancelled", cancelledAt: new Date() }).where(and(eq(sales.id, saleId), eq(sales.status, "completed")));
+    if (claimed.affectedRows !== 1) {
+      const [sale] = await tx.select({ id: sales.id }).from(sales).where(eq(sales.id, saleId)).limit(1);
+      throw new Error(sale ? "Esta venda já foi cancelada" : "Venda não encontrada");
+    }
     const lines = await tx.select().from(saleItems).where(eq(saleItems.saleId, saleId));
     for (const line of lines) {
       await tx.update(inventoryVariants).set({ quantity: sql`${inventoryVariants.quantity} + ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryVariants.id, line.variantId));
       await tx.update(inventoryItems).set({ quantity: sql`${inventoryItems.quantity} + ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryItems.id, line.itemId));
       await tx.insert(inventoryMovements).values({ itemId: line.itemId, variantId: line.variantId, type: "entry", quantity: line.quantity, reason: `Cancelamento da venda #${saleId}` });
     }
-    await tx.update(sales).set({ status: "cancelled", cancelledAt: new Date() }).where(eq(sales.id, saleId));
     return { saleId, restoredItems: lines.length };
   });
 }
