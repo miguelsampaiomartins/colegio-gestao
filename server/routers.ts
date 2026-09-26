@@ -10,6 +10,7 @@ import {
   createInventoryProduct,
   addInventoryVariantUnits,
   addInventoryVariant,
+  cancelSale,
   createSale,
   createStudent,
   getDashboardStats,
@@ -74,6 +75,9 @@ export const appRouter = router({
     createSale: protectedProcedure
       .input(z.object({ discountType: z.enum(["fixed", "percentage"]).optional(), discountValue: z.number().min(0).optional(), items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => createSale(input)),
+    cancelSale: protectedProcedure
+      .input(z.object({ saleId: z.number().int().positive() }))
+      .mutation(({ input }) => cancelSale(input.saleId)),
     incidents: protectedProcedure.query(() => listIncidents()),
     addIncident: protectedProcedure
       .input(z.object({ studentId: z.number().int().positive(), type: z.enum(["absence", "late", "homework", "book", "uniform", "behavior", "other"]), note: z.string().min(3) }))

@@ -72,6 +72,8 @@ export const sales = mysqlTable("sales", {
   totalCents: int("totalCents").default(0).notNull(),
   discountCents: int("discountCents").default(0).notNull(),
   discountType: mysqlEnum("discountType", ["fixed", "percentage"]).default("fixed").notNull(),
+  status: mysqlEnum("status", ["completed", "cancelled"]).default("completed").notNull(),
+  cancelledAt: timestamp("cancelledAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

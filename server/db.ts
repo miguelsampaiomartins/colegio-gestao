@@ -237,7 +237,7 @@ export async function createSale(input: { discountType?: "fixed" | "percentage";
     const requestedDiscountCents = discountType === "percentage" ? Math.round(subtotalCents * Math.min(discountValue, 100) / 100) : Math.round(discountValue * 100);
     const discountCents = Math.min(requestedDiscountCents, subtotalCents);
     const totalCents = subtotalCents - discountCents;
-    await tx.insert(sales).values({ totalCents, discountCents });
+    await tx.insert(sales).values({ totalCents, discountCents, discountType });
     const createdSale = await tx.select().from(sales).orderBy(desc(sales.id)).limit(1);
     const sale = createdSale[0];
     if (!sale) throw new Error("Não foi possível criar a venda");
@@ -247,7 +247,7 @@ export async function createSale(input: { discountType?: "fixed" | "percentage";
       await tx.update(inventoryItems).set({ quantity: sql`${inventoryItems.quantity} - ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryItems.id, line.itemId));
       await tx.insert(inventoryMovements).values({ itemId: line.itemId, variantId: line.variantId, type: "exit", quantity: line.quantity, reason: `Venda #${sale.id}` });
     }
-    return { saleId: sale.id, subtotalCents, discountCents, totalCents };
+    return { saleId: sale.id, subtotalCents, discountCents, discountType, totalCents };
   });
 }
 
@@ -259,6 +259,25 @@ export async function listSales() {
     const items = await db.select({ itemName: inventoryItems.name, variantName: inventoryVariants.name, quantity: saleItems.quantity, unitPriceCents: saleItems.unitPriceCents, totalCents: saleItems.totalCents }).from(saleItems).leftJoin(inventoryItems, eq(saleItems.itemId, inventoryItems.id)).leftJoin(inventoryVariants, eq(saleItems.variantId, inventoryVariants.id)).where(eq(saleItems.saleId, sale.id)).orderBy(saleItems.id);
     return { ...sale, items };
   }));
+}
+
+export async function cancelSale(saleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.transaction(async tx => {
+    const saleRows = await tx.select().from(sales).where(eq(sales.id, saleId)).limit(1);
+    const sale = saleRows[0];
+    if (!sale) throw new Error("Venda não encontrada");
+    if (sale.status === "cancelled") throw new Error("Esta venda já foi cancelada");
+    const lines = await tx.select().from(saleItems).where(eq(saleItems.saleId, saleId));
+    for (const line of lines) {
+      await tx.update(inventoryVariants).set({ quantity: sql`${inventoryVariants.quantity} + ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryVariants.id, line.variantId));
+      await tx.update(inventoryItems).set({ quantity: sql`${inventoryItems.quantity} + ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryItems.id, line.itemId));
+      await tx.insert(inventoryMovements).values({ itemId: line.itemId, variantId: line.variantId, type: "entry", quantity: line.quantity, reason: `Cancelamento da venda #${saleId}` });
+    }
+    await tx.update(sales).set({ status: "cancelled", cancelledAt: new Date() }).where(eq(sales.id, saleId));
+    return { saleId, restoredItems: lines.length };
+  });
 }
 
 export async function listIncidents() {
