@@ -121,3 +121,9 @@ Na aba **Equipe e acessos**, somente o dono pode clicar em **Excluir funcionári
 ### Pesquisa e histórico de compras por aluno
 
 Na aba **Vendas**, use o campo “Buscar aluno, matrícula ou turma” para localizar rapidamente o aluno antes de finalizar a venda. Para consultar compras anteriores, use a seção **Histórico de compras por aluno**, pesquise pelo nome e selecione o aluno. O sistema reúne todas as vendas vinculadas às matrículas desse aluno, inclusive vendas canceladas, mostrando data, pagamento, valor e acesso aos detalhes/recibo.
+
+### Agenda de infrações e histórico por aluno
+
+A aba **Anotações** funciona como uma agenda escolar: ao registrar uma infração, informe aluno, data, tipo e descrição. Os registros aparecem agrupados por dia e podem ser filtrados por data, aluno, descrição, tipo ou situação em aberto/resolvida.
+
+A seção **Histórico de infrações por aluno** permite pesquisar e selecionar um aluno para consultar todas as ocorrências dele, com data, tipo, descrição e situação.

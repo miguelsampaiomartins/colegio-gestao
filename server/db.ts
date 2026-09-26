@@ -446,6 +446,13 @@ export async function listIncidents() {
   return db.select({ id: incidents.id, studentId: incidents.studentId, studentName: students.name, type: incidents.type, note: incidents.note, occurredAt: incidents.occurredAt, resolved: incidents.resolved }).from(incidents).leftJoin(students, eq(incidents.studentId, students.id)).orderBy(desc(incidents.occurredAt));
 }
 
+/** Returns the complete disciplinary history for one student, newest first. */
+export async function listIncidentsByStudent(studentId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ id: incidents.id, studentId: incidents.studentId, studentName: students.name, type: incidents.type, note: incidents.note, occurredAt: incidents.occurredAt, resolved: incidents.resolved }).from(incidents).leftJoin(students, eq(incidents.studentId, students.id)).where(eq(incidents.studentId, studentId)).orderBy(desc(incidents.occurredAt), desc(incidents.id));
+}
+
 export async function createIncident(input: typeof incidents.$inferInsert) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");

@@ -95,3 +95,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Adicionar painel de pesquisa por nome, total comprado, status, data, pagamento, valor, detalhes e recibo.
 - [x] Preservar vendas legadas e incluir vendas canceladas no histórico individual.
 - [x] Validar TypeScript, 35 testes, build e visual desktop/mobile.
+
+
+## Agenda de infrações — 26/09/2026
+
+- [x] Transformar Anotações em agenda escolar agrupada por data.
+- [x] Permitir informar a data da infração e filtrar por data, aluno, descrição, tipo e situação.
+- [x] Renomear o fluxo para infrações e ocorrências, mantendo os tipos existentes.
+- [x] Criar histórico completo de infrações por aluno com busca, situação e data.
+- [x] Validar TypeScript, 35 testes, build e visual desktop/mobile.

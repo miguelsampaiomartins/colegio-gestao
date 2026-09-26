@@ -53,6 +53,7 @@ describe("login por senha", () => {
     const caller = appRouter.createCaller(fakeContext("staff"));
     await expect(caller.staff.delete({ targetId: 9 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.school.deleteInventoryProduct({ itemId: 9 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.school.incidentsByStudent({ studentId: 9 })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
   it("rejeita login local quando o modo Google está ativo", async () => {
     vi.stubEnv("VITE_AUTH_PROVIDER", "google");
