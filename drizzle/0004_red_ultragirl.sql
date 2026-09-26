@@ -1,0 +1,1 @@
+ALTER TABLE `sales` ADD `discountType` enum('fixed','percentage') DEFAULT 'fixed' NOT NULL;

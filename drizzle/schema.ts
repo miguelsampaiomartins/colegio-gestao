@@ -71,6 +71,7 @@ export const sales = mysqlTable("sales", {
   id: int("id").autoincrement().primaryKey(),
   totalCents: int("totalCents").default(0).notNull(),
   discountCents: int("discountCents").default(0).notNull(),
+  discountType: mysqlEnum("discountType", ["fixed", "percentage"]).default("fixed").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

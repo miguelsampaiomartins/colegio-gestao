@@ -212,7 +212,7 @@ export async function listInventoryMovements() {
   return db.select({ id: inventoryMovements.id, itemId: inventoryMovements.itemId, variantId: inventoryMovements.variantId, itemName: inventoryItems.name, variantName: inventoryVariants.name, itemSize: inventoryItems.size, category: inventoryItems.category, unitPriceCents: inventoryVariants.unitPriceCents, fallbackUnitPriceCents: inventoryItems.unitPriceCents, type: inventoryMovements.type, quantity: inventoryMovements.quantity, reason: inventoryMovements.reason, createdAt: inventoryMovements.createdAt }).from(inventoryMovements).leftJoin(inventoryItems, eq(inventoryMovements.itemId, inventoryItems.id)).leftJoin(inventoryVariants, eq(inventoryMovements.variantId, inventoryVariants.id)).orderBy(desc(inventoryMovements.createdAt), desc(inventoryMovements.id));
 }
 
-export async function createSale(input: { discountCents?: number; items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
+export async function createSale(input: { discountType?: "fixed" | "percentage"; discountValue?: number; items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   if (!input.items.length) throw new Error("Adicione pelo menos um item à venda");
@@ -232,7 +232,10 @@ export async function createSale(input: { discountCents?: number; items: Array<{
       prepared.push({ itemId: line.itemId, variantId: line.variantId, quantity: line.quantity, unitPriceCents: variant[0].unitPriceCents, totalCents: variant[0].unitPriceCents * line.quantity, nextQuantity });
     }
     const subtotalCents = prepared.reduce((sum, line) => sum + line.totalCents, 0);
-    const discountCents = Math.min(Math.max(input.discountCents ?? 0, 0), subtotalCents);
+    const discountType = input.discountType ?? "fixed";
+    const discountValue = Math.max(input.discountValue ?? 0, 0);
+    const requestedDiscountCents = discountType === "percentage" ? Math.round(subtotalCents * Math.min(discountValue, 100) / 100) : Math.round(discountValue * 100);
+    const discountCents = Math.min(requestedDiscountCents, subtotalCents);
     const totalCents = subtotalCents - discountCents;
     await tx.insert(sales).values({ totalCents, discountCents });
     const createdSale = await tx.select().from(sales).orderBy(desc(sales.id)).limit(1);
