@@ -12,6 +12,7 @@ import {
   listEnrollments,
   listIncidents,
   listInventory,
+  listInventoryMovements,
   listStudents,
   recordInventoryMovement,
   resolveIncident,
@@ -44,6 +45,7 @@ export const appRouter = router({
       .input(z.object({ studentId: z.number().int().positive(), schoolYear: z.string().min(4), className: z.string().min(1), shift: z.enum(["morning", "afternoon", "fulltime"]) }))
       .mutation(({ input }) => createEnrollment(input)),
     inventory: protectedProcedure.query(() => listInventory()),
+    inventoryHistory: protectedProcedure.query(() => listInventoryMovements()),
     addInventoryItem: protectedProcedure
       .input(z.object({ name: z.string().min(2), category: z.enum(["uniform", "book", "other"]), size: z.string().optional(), quantity: z.number().int().min(0), minQuantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) }))
       .mutation(({ input }) => createInventoryItem(input)),

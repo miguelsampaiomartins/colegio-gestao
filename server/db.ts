@@ -143,6 +143,27 @@ export async function recordInventoryMovement(input: { itemId: number; type: "en
   return (await db.select().from(inventoryItems).where(eq(inventoryItems.id, input.itemId)).limit(1))[0];
 }
 
+export async function listInventoryMovements() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: inventoryMovements.id,
+      itemId: inventoryMovements.itemId,
+      itemName: inventoryItems.name,
+      itemSize: inventoryItems.size,
+      category: inventoryItems.category,
+      unitPriceCents: inventoryItems.unitPriceCents,
+      type: inventoryMovements.type,
+      quantity: inventoryMovements.quantity,
+      reason: inventoryMovements.reason,
+      createdAt: inventoryMovements.createdAt,
+    })
+    .from(inventoryMovements)
+    .leftJoin(inventoryItems, eq(inventoryMovements.itemId, inventoryItems.id))
+    .orderBy(desc(inventoryMovements.createdAt), desc(inventoryMovements.id));
+}
+
 export async function listIncidents() {
   const db = await getDb();
   if (!db) return [];
