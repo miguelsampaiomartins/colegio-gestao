@@ -26,4 +26,4 @@ Implementar backup e recuperação do banco, HTTPS caso o sistema fique disponí
 - [x] Exibir e validar os novos campos na tela de alunos e matrículas; permitir iniciar a matrícula após o cadastro.
 - [x] Agrupar as saídas de estoque pelo número da venda com linhas de produto, variedade e quantidade, preservando entradas comuns.
 - [x] Revisar migração e executar teste de integração de cadastro, legado, venda 2+2 e cancelamento em banco descartável.
-- [ ] Salvar checkpoint e atualizar o GitHub privado.
+- [x] Salvar checkpoint e atualizar o GitHub privado (versão `2784f7ab`).
