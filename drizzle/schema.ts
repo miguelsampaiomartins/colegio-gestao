@@ -70,6 +70,7 @@ export const inventoryMovements = mysqlTable("inventoryMovements", {
 export const sales = mysqlTable("sales", {
   id: int("id").autoincrement().primaryKey(),
   totalCents: int("totalCents").default(0).notNull(),
+  discountCents: int("discountCents").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

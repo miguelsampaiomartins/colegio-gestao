@@ -212,7 +212,7 @@ export async function listInventoryMovements() {
   return db.select({ id: inventoryMovements.id, itemId: inventoryMovements.itemId, variantId: inventoryMovements.variantId, itemName: inventoryItems.name, variantName: inventoryVariants.name, itemSize: inventoryItems.size, category: inventoryItems.category, unitPriceCents: inventoryVariants.unitPriceCents, fallbackUnitPriceCents: inventoryItems.unitPriceCents, type: inventoryMovements.type, quantity: inventoryMovements.quantity, reason: inventoryMovements.reason, createdAt: inventoryMovements.createdAt }).from(inventoryMovements).leftJoin(inventoryItems, eq(inventoryMovements.itemId, inventoryItems.id)).leftJoin(inventoryVariants, eq(inventoryMovements.variantId, inventoryVariants.id)).orderBy(desc(inventoryMovements.createdAt), desc(inventoryMovements.id));
 }
 
-export async function createSale(input: { items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
+export async function createSale(input: { discountCents?: number; items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   if (!input.items.length) throw new Error("Adicione pelo menos um item à venda");
@@ -231,8 +231,10 @@ export async function createSale(input: { items: Array<{ itemId: number; variant
       if (nextQuantity < 0) throw new Error(`Estoque insuficiente para ${variant[0].name}`);
       prepared.push({ itemId: line.itemId, variantId: line.variantId, quantity: line.quantity, unitPriceCents: variant[0].unitPriceCents, totalCents: variant[0].unitPriceCents * line.quantity, nextQuantity });
     }
-    const totalCents = prepared.reduce((sum, line) => sum + line.totalCents, 0);
-    await tx.insert(sales).values({ totalCents });
+    const subtotalCents = prepared.reduce((sum, line) => sum + line.totalCents, 0);
+    const discountCents = Math.min(Math.max(input.discountCents ?? 0, 0), subtotalCents);
+    const totalCents = subtotalCents - discountCents;
+    await tx.insert(sales).values({ totalCents, discountCents });
     const createdSale = await tx.select().from(sales).orderBy(desc(sales.id)).limit(1);
     const sale = createdSale[0];
     if (!sale) throw new Error("Não foi possível criar a venda");
@@ -242,7 +244,7 @@ export async function createSale(input: { items: Array<{ itemId: number; variant
       await tx.update(inventoryItems).set({ quantity: sql`${inventoryItems.quantity} - ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryItems.id, line.itemId));
       await tx.insert(inventoryMovements).values({ itemId: line.itemId, variantId: line.variantId, type: "exit", quantity: line.quantity, reason: `Venda #${sale.id}` });
     }
-    return { saleId: sale.id, totalCents };
+    return { saleId: sale.id, subtotalCents, discountCents, totalCents };
   });
 }
 

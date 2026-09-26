@@ -72,7 +72,7 @@ export const appRouter = router({
       .input(z.object({ type: z.enum(["entry", "exit"]), reason: z.string().optional(), items: z.array(z.object({ itemId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => recordInventoryMovements(input)),
     createSale: protectedProcedure
-      .input(z.object({ items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
+      .input(z.object({ discountCents: z.number().int().min(0).optional(), items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => createSale(input)),
     incidents: protectedProcedure.query(() => listIncidents()),
     addIncident: protectedProcedure
