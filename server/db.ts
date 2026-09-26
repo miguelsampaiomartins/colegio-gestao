@@ -174,6 +174,22 @@ export async function recordInventoryMovements(input: { type: "entry" | "exit"; 
   });
 }
 
+export async function addInventoryVariantUnits(input: { reason?: string; items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  if (!input.items.length) throw new Error("Informe pelo menos uma quantidade");
+  return db.transaction(async tx => {
+    for (const line of input.items) {
+      const variant = await tx.select().from(inventoryVariants).where(and(eq(inventoryVariants.id, line.variantId), eq(inventoryVariants.itemId, line.itemId))).limit(1);
+      if (!variant[0]) throw new Error("Uma das variedades selecionadas não foi encontrada");
+      await tx.update(inventoryVariants).set({ quantity: sql`${inventoryVariants.quantity} + ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryVariants.id, line.variantId));
+      await tx.update(inventoryItems).set({ quantity: sql`${inventoryItems.quantity} + ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryItems.id, line.itemId));
+      await tx.insert(inventoryMovements).values({ itemId: line.itemId, variantId: line.variantId, type: "entry", quantity: line.quantity, reason: input.reason ?? "Reposição de estoque" });
+    }
+    return input.items.length;
+  });
+}
+
 export async function listInventoryMovements() {
   const db = await getDb();
   if (!db) return [];
