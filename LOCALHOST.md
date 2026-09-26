@@ -82,6 +82,8 @@ Instale [Node.js 22.13+](https://nodejs.org/en/download), Git, pnpm 10 e MySQL. 
 | Usuário ou senha inválidos | Confira o nome de usuário completo sem `+` (exemplo: `miguel1234`). Após cinco falhas, aguarde 15 minutos e tente a senha correta. |
 | `URI malformed` em `DATABASE_URL` | Codifique os caracteres reservados da senha para URL, como `@` → `%40`; não envie sua senha em mensagens. |
 | Login realizado, mas sem “Equipe e acessos” | Confirme que entrou na **conta do dono** inicializada por `owner:init`, não numa conta de funcionário. |
+| Dados do colégio recusam o salvamento | Atualize o projeto, pare o servidor e rode `pnpm.cmd db:push` no mesmo banco local; depois entre com a conta local do dono. CNPJ pode ser digitado com pontuação e será normalizado automaticamente. |
+| Tela informa que é exclusiva do dono | A conta atual não tem `localRole=owner`; saia e entre com o usuário criado por `owner:init`. O login Google não recebe acesso a esta área. |
 | Servidor escolhe porta diferente de 3000 | Feche o processo antigo que ocupa a 3000 antes de iniciar; escolha apenas `localhost`. |
 
 Para verificar o código: `pnpm.cmd check`, `pnpm.cmd test` e `pnpm.cmd build` dentro da pasta do projeto. **Antes de usar dados reais**, configure backup regular do MySQL. Para abrir o sistema em outros computadores, é necessário hospedar o servidor com HTTPS e planejar uma política de recuperação da conta do dono; `localhost` sozinho só funciona no computador onde está rodando.

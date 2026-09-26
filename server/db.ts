@@ -127,10 +127,24 @@ export async function getSchoolProfile() {
   return profile ?? null;
 }
 
+export function normalizeSchoolCnpj(value?: string | null) {
+  const digits = value?.replace(/\D/g, "") || "";
+  if (digits && digits.length !== 14) throw new TRPCError({ code: "BAD_REQUEST", message: "Informe um CNPJ com 14 dígitos." });
+  return digits || null;
+}
+
+export function normalizeSchoolPhone(value?: string | null) {
+  const digits = value?.replace(/\D/g, "") || "";
+  if (digits.length > 20) throw new TRPCError({ code: "BAD_REQUEST", message: "O telefone deve ter no máximo 20 dígitos." });
+  return digits || null;
+}
+
 export async function saveSchoolProfile(input: { name: string; cnpj?: string | null; address?: string | null; phone?: string | null; email?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  const values = { id: 1, name: input.name.trim(), cnpj: input.cnpj || null, address: input.address?.trim() || null, phone: input.phone || null, email: input.email?.trim() || null };
+  const cnpj = normalizeSchoolCnpj(input.cnpj);
+  const phone = normalizeSchoolPhone(input.phone);
+  const values = { id: 1, name: input.name.trim(), cnpj, address: input.address?.trim() || null, phone, email: input.email?.trim() || null };
   await db.insert(schoolProfile).values(values).onDuplicateKeyUpdate({ set: { name: values.name, cnpj: values.cnpj, address: values.address, phone: values.phone, email: values.email, updatedAt: new Date() } });
   return getSchoolProfile();
 }

@@ -109,7 +109,13 @@ export const appRouter = router({
   school: router({
     dashboard: protectedProcedure.query(() => getDashboardStats()),
     profile: protectedProcedure.query(() => getSchoolProfile()),
-    updateProfile: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(160), cnpj: z.string().trim().max(18).optional(), address: z.string().trim().max(500).optional(), phone: z.string().trim().max(40).optional(), email: z.string().trim().email().max(320).optional() })).mutation(({ input }) => saveSchoolProfile(input)),
+    updateProfile: ownerProcedure.input(z.object({
+      name: z.string().trim().min(2).max(160),
+      cnpj: z.string().trim().max(18).transform(value => value.replace(/\D/g, "")).refine(value => !value || value.length === 14, "Informe um CNPJ com 14 dígitos.").optional(),
+      address: z.string().trim().max(500).optional(),
+      phone: z.string().trim().max(40).transform(value => value.replace(/\D/g, "")).refine(value => !value || value.length <= 20, "O telefone deve ter no máximo 20 dígitos.").optional(),
+      email: z.string().trim().email().max(320).optional(),
+    })).mutation(({ input }) => saveSchoolProfile(input)),
     students: protectedProcedure.query(() => listStudents()),
     addStudent: auditedProcedure.input(studentInput).mutation(({ input }) => createStudent(input)),
     enrollments: protectedProcedure.query(() => listEnrollments()),
