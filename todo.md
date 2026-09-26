@@ -56,8 +56,8 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 ## Venda por matrícula e recibo completo — 26/09/2026
 
 - [x] Criar vínculo opcional com matrícula, dados do responsável e identificação do colégio sem alterar vendas antigas.
-- [ ] Validar matrícula ativa antes de finalizar e salvar dados históricos de comprador e vendedor para recibos estáveis.
-- [ ] Adicionar busca de aluno/matrícula, identificação do colégio editável pelo dono e detalhes da venda.
-- [ ] Gerar recibo simples imprimível com dados do responsável, colégio, produtos, descontos e pagamento, sem inserção insegura de HTML.
-- [ ] Testar migração, vendas legadas, venda vinculada, mudança de dados e visual em desktop e celular.
-- [ ] Salvar checkpoint e sincronizar com o GitHub privado.
+- [x] Validar matrícula ativa antes de finalizar e salvar dados históricos de comprador e vendedor para recibos estáveis.
+- [x] Adicionar busca de aluno/matrícula, identificação do colégio editável pelo dono e detalhes da venda.
+- [x] Gerar recibo simples imprimível com dados do responsável, colégio, produtos, descontos e pagamento, sem inserção insegura de HTML.
+- [x] Testar migração, vendas legadas, venda vinculada, mudança de dados e visual em desktop e celular.
+- [x] Salvar checkpoint e sincronizar com o GitHub privado.

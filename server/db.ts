@@ -135,6 +135,35 @@ export async function saveSchoolProfile(input: { name: string; cnpj?: string | n
   return getSchoolProfile();
 }
 
+export type SaleBuyerSource = {
+  enrollment: { id: number; schoolYear: string; className: string };
+  student: { name: string; guardianName: string; guardianCpf: string | null; guardianEmail: string | null; address: string | null; guardianPhone: string | null };
+  phones: string[];
+};
+
+export function buildSaleBuyerSnapshot(source: SaleBuyerSource) {
+  return {
+    enrollmentId: source.enrollment.id,
+    studentName: source.student.name,
+    enrollmentNumber: formatEnrollmentNumber(source.enrollment.id),
+    schoolYear: source.enrollment.schoolYear,
+    className: source.enrollment.className,
+    guardianName: source.student.guardianName,
+    guardianCpf: source.student.guardianCpf,
+    guardianEmail: source.student.guardianEmail,
+    guardianAddress: source.student.address,
+    guardianPhones: JSON.stringify(source.phones.length ? source.phones : source.student.guardianPhone ? [source.student.guardianPhone] : []),
+  };
+}
+
+export function buildSaleSellerSnapshot(profile: { name: string; cnpj: string | null; address: string | null; phone: string | null; email: string | null } | null | undefined) {
+  return { sellerName: profile?.name ?? "Colégio Gestão", sellerCnpj: profile?.cnpj ?? null, sellerAddress: profile?.address ?? null, sellerPhone: profile?.phone ?? null, sellerEmail: profile?.email ?? null, sellerConfigured: profile ? 1 : 0 };
+}
+
+export function isEligibleSaleEnrollment(status: "active" | "pending" | "cancelled") {
+  return status === "active";
+}
+
 export async function createEnrollment(input: typeof enrollments.$inferInsert) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -268,21 +297,10 @@ export async function createSale(input: { enrollmentId?: number; discountType?: 
     if (input.enrollmentId) {
       const [selected] = await tx.select({ enrollment: enrollments, student: students }).from(enrollments)
         .innerJoin(students, eq(enrollments.studentId, students.id))
-        .where(and(eq(enrollments.id, input.enrollmentId), eq(enrollments.status, "active"))).limit(1);
-      if (!selected) throw new TRPCError({ code: "BAD_REQUEST", message: "A matrícula selecionada não está ativa ou não foi encontrada." });
+        .where(eq(enrollments.id, input.enrollmentId)).limit(1);
+      if (!selected || !isEligibleSaleEnrollment(selected.enrollment.status)) throw new TRPCError({ code: "BAD_REQUEST", message: "A matrícula selecionada não está ativa ou não foi encontrada." });
       const phones = await tx.select({ number: studentPhones.number }).from(studentPhones).where(eq(studentPhones.studentId, selected.student.id)).orderBy(studentPhones.position, studentPhones.id);
-      buyerSnapshot = {
-        enrollmentId: selected.enrollment.id,
-        studentName: selected.student.name,
-        enrollmentNumber: formatEnrollmentNumber(selected.enrollment.id),
-        schoolYear: selected.enrollment.schoolYear,
-        className: selected.enrollment.className,
-        guardianName: selected.student.guardianName,
-        guardianCpf: selected.student.guardianCpf,
-        guardianEmail: selected.student.guardianEmail,
-        guardianAddress: selected.student.address,
-        guardianPhones: JSON.stringify(phones.length ? phones.map(phone => phone.number) : selected.student.guardianPhone ? [selected.student.guardianPhone] : []),
-      };
+      buyerSnapshot = buildSaleBuyerSnapshot({ enrollment: selected.enrollment, student: selected.student, phones: phones.map(phone => phone.number) });
     }
     const normalizedItems = Array.from(input.items.reduce((map, line) => {
       const key = `${line.itemId}:${line.variantId}`;
@@ -305,9 +323,7 @@ export async function createSale(input: { enrollmentId?: number; discountType?: 
     const discountCents = Math.min(requestedDiscountCents, subtotalCents);
     const totalCents = subtotalCents - discountCents;
     const paymentMethod = input.paymentMethod ?? "other";
-    await tx.insert(sales).values({ totalCents, discountCents, discountType, paymentMethod, ...buyerSnapshot,
-      sellerName: profile?.name ?? "Colégio Gestão", sellerCnpj: profile?.cnpj ?? null, sellerAddress: profile?.address ?? null,
-      sellerPhone: profile?.phone ?? null, sellerEmail: profile?.email ?? null, sellerConfigured: profile ? 1 : 0 });
+    await tx.insert(sales).values({ totalCents, discountCents, discountType, paymentMethod, ...buyerSnapshot, ...buildSaleSellerSnapshot(profile) });
     const createdSale = await tx.select().from(sales).orderBy(desc(sales.id)).limit(1);
     const sale = createdSale[0];
     if (!sale) throw new Error("Não foi possível criar a venda");
