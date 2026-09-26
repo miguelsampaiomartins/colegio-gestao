@@ -1,19 +1,21 @@
-# Acompanhamento do projeto — autenticação Google
+# Acompanhamento — contas locais do colégio
 
-## Trabalho de implementação concluído
+## Implementado e verificado
 
-- [x] Preservar o login Manus por padrão na versão hospedada.
-- [x] Adicionar modo opcional `VITE_AUTH_PROVIDER=google` à instalação local.
-- [x] Proteger o fluxo com estado OAuth, nonce, validação do ID token, e-mails permitidos e sessões assinadas.
-- [x] Mostrar diagnóstico de configuração na tela de entrada quando faltarem variáveis de ambiente.
-- [x] Atualizar `LOCALHOST.md` com os passos do Google Cloud e do Windows.
-- [x] Validar instalação, checagem de tipos, suíte automatizada, build e rotas HTTP sem credenciais reais.
-- [x] Confirmar que a versão hospedada mantém o login anterior.
+- [x] Tabela separada `staffAccounts` e migrações aditivas, sem alteração dos dados escolares.
+- [x] Assistente `pnpm owner:init` para criar uma única conta de dono no banco local, com senha oculta.
+- [x] Nome de usuário = primeiro nome sem acento + quatro primeiros dígitos informados do CPF; CPF completo não é solicitado nem armazenado.
+- [x] Senhas com hash scrypt e salt aleatório, mínimo de 15 caracteres; bloqueio temporário após erros repetidos.
+- [x] Sessões de senha separadas de Google/Manus, revogadas após remover acesso ou alterar senha.
+- [x] Rotas da equipe protegidas no servidor pelo papel de dono, não apenas escondidas na interface.
+- [x] Painel para cadastrar, desativar, reativar e trocar senha dos funcionários; Minha conta para trocar a própria senha.
+- [x] Guia de migração do Windows/localhost, testes automatizados, build, teste em navegador e fluxo completo com banco descartável.
+- [x] Versão hospedada confirmada no provedor Manus anterior; novo modo é opt-in.
 
-## Configuração externa sob controle do proprietário
+## Próximo passo no computador do proprietário
 
-Para usar no próprio computador, o proprietário precisa criar um cliente OAuth Web no Google Cloud, autorizar o callback exato de localhost, colocar o Client ID e o Client Secret **somente** no `.env` local e informar `GOOGLE_ALLOWED_EMAILS`. Depois deve atualizar o clone com `git pull origin main`, instalar dependências, reiniciar o servidor e fazer um login real com um e-mail permitido. Essas etapas não podem ser executadas neste sandbox porque as credenciais e o Windows do proprietário não estão disponíveis aqui. O guia `LOCALHOST.md` traz o passo a passo sem exigir compartilhamento de segredos.
+Parar o servidor local, atualizar o clone, aplicar a migração com `pnpm.cmd db:push`, criar o dono com `pnpm.cmd owner:init` e só então definir `VITE_AUTH_PROVIDER=password` no `.env`. O guia `LOCALHOST.md` descreve cada passo. A conta real do dono e as senhas do colégio **não** foram criadas nem recebidas neste sandbox. Nenhuma pessoa real foi incluída ou removida.
 
-## Fora do escopo desta correção
+## Antes de produção
 
-Antes do uso real com alunos e vendas, convém separar permissões por papel e implementar backups do banco. A lista de e-mails permitidos já bloqueia contas não autorizadas no modo Google, mas não diferencia funções internas.
+Implementar backup e recuperação do banco, HTTPS caso o sistema fique disponível em outros computadores e limitação de tentativas compartilhada entre instâncias se for publicado em hospedagem distribuída. O acesso do funcionário cobre as telas operacionais, não a gestão dos membros.

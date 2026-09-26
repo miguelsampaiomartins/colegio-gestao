@@ -5,6 +5,7 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { googleModeEnabled, registerGoogleAuthRoutes } from "../googleAuth";
+import { localModeEnabled } from "../localAccounts";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -36,7 +37,7 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
-  if (!googleModeEnabled()) registerOAuthRoutes(app);
+  if (!googleModeEnabled() && !localModeEnabled()) registerOAuthRoutes(app);
   registerGoogleAuthRoutes(app);
   // tRPC API
   app.use(
@@ -60,7 +61,8 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+  const listenHost = localModeEnabled() && process.env.NODE_ENV === "development" ? "127.0.0.1" : "0.0.0.0";
+  server.listen(port, listenHost, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
 }

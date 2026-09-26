@@ -50,6 +50,20 @@
       "when": 1790385265402,
       "tag": "0006_certain_otto_octavius",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1790421781941,
+      "tag": "0007_slippery_revanche",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1790421838386,
+      "tag": "0008_dapper_banshee",
+      "breakpoints": true
     }
   ]
 }

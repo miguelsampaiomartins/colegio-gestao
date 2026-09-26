@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { bigint, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /** Core user table backing Manus authentication. */
 export const users = mysqlTable("users", {
@@ -11,6 +11,24 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+});
+
+/** Local password accounts, separate from OAuth identities. No complete CPF is stored. */
+export const staffAccounts = mysqlTable("staffAccounts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  username: varchar("username", { length: 64 }).notNull().unique(),
+  fullName: varchar("fullName", { length: 160 }).notNull(),
+  jobTitle: varchar("jobTitle", { length: 120 }).notNull(),
+  role: mysqlEnum("role", ["owner", "staff"]).notNull(),
+  ownerSlot: int("ownerSlot").unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  active: int("active").default(1).notNull(),
+  sessionVersion: int("sessionVersion").default(1).notNull(),
+  failedAttempts: int("failedAttempts").default(0).notNull(),
+  lockedUntil: bigint("lockedUntil", { mode: "number" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export const students = mysqlTable("students", {
@@ -99,6 +117,7 @@ export const incidents = mysqlTable("incidents", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+export type StaffAccount = typeof staffAccounts.$inferSelect;
 export type Student = typeof students.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type InventoryItem = typeof inventoryItems.$inferSelect;

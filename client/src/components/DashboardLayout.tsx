@@ -1,6 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { cn } from "@/lib/utils";
@@ -19,6 +21,7 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  KeyRound,
   ShieldCheck,
   ShoppingCart,
   UsersRound,
@@ -43,10 +46,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   });
   const { loading, user } = useAuth();
   const provider = trpc.auth.provider.useQuery(undefined, { retry: false });
+  const utils = trpc.useUtils();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const login = trpc.auth.login.useMutation({ onSuccess: async () => {
+    setPassword(""); await utils.auth.me.invalidate();
+  } });
   useEffect(() => localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString()), [sidebarWidth]);
   if (loading) return <DashboardLayoutSkeleton />;
   if (!user) {
     const google = provider.data?.mode === "google";
+    const local = provider.data?.mode === "password";
     const error = new URLSearchParams(window.location.search).get("login_error");
     return <div className="grid min-h-screen place-items-center bg-[#f7f7f3] p-6">
       <div className="w-full max-w-md rounded-3xl bg-[#fffefb] p-8 text-center shadow-[0_16px_60px_rgba(26,54,73,.1)]">
@@ -54,11 +64,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em] text-[#14877e]">Colégio Gestão</p>
         <h1 className="mt-2 font-display text-2xl font-bold text-[#12233f]">Acesse o painel da escola</h1>
         <p className="mt-3 text-sm leading-6 text-[#7c8994]">Entre com sua conta autorizada para gerenciar alunos, matrículas, estoque e vendas.</p>
-        <Button disabled={provider.isLoading || provider.isError || !provider.data?.configured} onClick={() => google ? window.location.assign("/api/auth/google/start") : startLogin()} className="mt-7 h-11 w-full rounded-xl bg-[#12233f] text-xs font-bold text-white hover:bg-[#203b60] disabled:opacity-50">
+        {local ? <form className="mt-7 space-y-4 text-left" onSubmit={event => { event.preventDefault(); login.mutate({ username, password }); }}>
+          <div className="space-y-1.5"><Label htmlFor="school-login">Nome de usuário</Label><Input id="school-login" autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={64} placeholder="ex.: amanda1234" value={username} onChange={event => setUsername(event.target.value.toLowerCase())} /></div>
+          <div className="space-y-1.5"><Label htmlFor="school-password">Senha</Label><Input id="school-password" type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} /></div>
+          <Button disabled={!provider.data?.configured || login.isPending} className="mt-2 h-11 w-full rounded-xl bg-[#12233f] text-xs font-bold text-white hover:bg-[#203b60] disabled:opacity-50">{login.isPending ? "Entrando..." : "Entrar no sistema"}<LogIn className="ml-2 h-4 w-4" /></Button>
+          {login.error && <p role="alert" className="text-center text-xs font-semibold text-[#b96046]">{login.error.message}</p>}
+          <p className="text-center text-xs text-[#81909e]">Esqueceu a senha? Peça ao dono do colégio para redefini-la.</p>
+        </form> : <Button disabled={provider.isLoading || provider.isError || !provider.data?.configured} onClick={() => google ? window.location.assign("/api/auth/google/start") : startLogin()} className="mt-7 h-11 w-full rounded-xl bg-[#12233f] text-xs font-bold text-white hover:bg-[#203b60] disabled:opacity-50">
           {google ? "Entrar com Google" : "Entrar no sistema"}<LogIn className="ml-2 h-4 w-4" />
-        </Button>
+        </Button>}
         {error && <p role="alert" className="mt-4 text-xs font-semibold text-[#b96046]">{error === "cancelled" ? "O login foi cancelado. Tente novamente." : "Não foi possível concluir o login. Confira as credenciais e tente novamente."}</p>}
-        {provider.data && !provider.data.configured && <p role="alert" className="mt-4 text-xs leading-5 text-[#b96046]">{google ? `Configure o Google no .env e reinicie o servidor: ${provider.data.missing.join(", ")}.` : "Configure o provedor de login antes de entrar."}</p>}
+        {provider.data && !provider.data.configured && <p role="alert" className="mt-4 text-xs leading-5 text-[#b96046]">{google ? `Configure o Google no .env e reinicie o servidor: ${provider.data.missing.join(", ")}.` : local ? `Configure o banco e a chave de sessão: ${provider.data.missing.join(", ")}.` : "Configure o provedor de login antes de entrar."}</p>}
         {provider.isError && <p role="alert" className="mt-4 text-xs text-[#b96046]">Não foi possível consultar a configuração de login. Verifique o servidor.</p>}
       </div>
     </div>;
@@ -91,7 +107,12 @@ function DashboardLayoutContent({
   const [resizing, setResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  const activeItem = menuItems.find(item => item.path === location) ?? menuItems[0];
+  const visibleMenu = [
+    ...menuItems,
+    ...(user?.localRole === "owner" ? [{ icon: ShieldCheck, label: "Equipe e acessos", path: "/equipe" }] : []),
+    ...(user?.localRole ? [{ icon: KeyRound, label: "Minha conta", path: "/minha-conta" }] : []),
+  ];
+  const activeItem = visibleMenu.find(item => item.path === location) ?? menuItems[0];
 
   useEffect(() => {
     const move = (event: MouseEvent) => {
@@ -138,7 +159,7 @@ function DashboardLayoutContent({
         </div>
         <nav className="flex-1 space-y-1.5 px-3 py-6">
           <p className={cn("mb-3 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-[#9aa5ae]", collapsed && "text-center px-0")}>{collapsed ? "•" : "Menu principal"}</p>
-          {menuItems.map(item => {
+          {visibleMenu.map(item => {
             const active = activeItem.path === item.path;
             return <button key={item.path} onClick={() => navigate(item.path)} className={cn("group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-semibold transition", active ? "bg-[#e8f3f1] text-[#147a73]" : "text-[#71808e] hover:bg-[#f5f7f6] hover:text-[#12233f]", collapsed && "justify-center px-0")}>
               <item.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-[#14877e]" : "text-[#91a0aa] group-hover:text-[#506273]")} />
@@ -150,7 +171,7 @@ function DashboardLayoutContent({
         <div className="border-t border-[#edf0ef] p-3">
           <div className={cn("flex items-center gap-3 rounded-xl px-2 py-2", collapsed && "justify-center px-0")}>
             <Avatar className="h-9 w-9 border border-[#dbe4e4] bg-[#e8f3f1]"><AvatarFallback className="bg-[#e8f3f1] text-xs font-bold text-[#147a73]">{user?.name?.slice(0, 1).toUpperCase() ?? "A"}</AvatarFallback></Avatar>
-            {!collapsed && <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-[#304359]">{user?.name ?? "Administrador"}</p><p className="truncate text-[10px] text-[#97a2ad]">{user?.email ?? "Acesso interno"}</p></div>}
+            {!collapsed && <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-[#304359]">{user?.name ?? "Administrador"}</p><p className="truncate text-[10px] text-[#97a2ad]">{user?.localRole === "owner" ? "Dono do colégio" : user?.localRole === "staff" ? "Funcionário" : user?.email ?? "Acesso interno"}</p></div>}
             {!collapsed && (user ? <button onClick={logout} className="rounded-lg p-1.5 text-[#a5afb7] hover:bg-[#f1f4f3] hover:text-[#12233f]" aria-label="Sair"><LogOut className="h-4 w-4" /></button> : <button onClick={() => startLogin()} className="rounded-lg p-1.5 text-[#14877e] hover:bg-[#e8f3f1]" aria-label="Entrar"><LogIn className="h-4 w-4" /></button>)}
           </div>
         </div>
@@ -158,7 +179,7 @@ function DashboardLayoutContent({
       </aside>
       <main className={cn("min-w-0 flex-1 transition-[margin] duration-200", isMobile ? "ml-0" : collapsed ? "ml-[76px]" : "ml-[var(--school-sidebar-width)]")} style={{ "--school-sidebar-width": `${sidebarWidth}px` } as React.CSSProperties}>
         <header className="sticky top-0 z-30 flex h-[70px] items-center justify-between border-b border-[#e8eceb] bg-[#f7f7f3]/90 px-5 backdrop-blur-md sm:px-8">
-          <div className="flex items-center gap-3"><button className="rounded-lg p-2 text-[#71808e] hover:bg-white" onClick={() => isMobile ? setMobileOpen(true) : setCollapsed(!collapsed)} aria-label="Abrir menu">{isMobile ? <Menu className="h-5 w-5" /> : <PanelLeftOpen className="h-4 w-4" />}</button><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#a1abb3]">Colégio Horizonte</p><h1 className="text-sm font-bold text-[#12233f] sm:text-base">{activeItem.label}</h1></div></div>
+          <div className="flex items-center gap-3"><button className="rounded-lg p-2 text-[#71808e] hover:bg-white" onClick={() => isMobile ? setMobileOpen(true) : setCollapsed(!collapsed)} aria-label="Abrir menu">{isMobile ? <Menu className="h-5 w-5" /> : <PanelLeftOpen className="h-4 w-4" />}</button><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#a1abb3]">Colégio Gestão</p><h1 className="text-sm font-bold text-[#12233f] sm:text-base">{activeItem.label}</h1></div></div>
           <div className="flex items-center gap-3"><div className="hidden items-center gap-2 rounded-full bg-white px-3 py-2 text-[11px] font-semibold text-[#748290] shadow-sm sm:flex"><span className="h-2 w-2 rounded-full bg-[#38b79e]" /> Ano letivo 2026</div><div className="h-8 w-px bg-[#e1e6e5]" /><div className="grid h-9 w-9 place-items-center rounded-full bg-[#f0ded5] text-xs font-bold text-[#a95137]">{user?.name?.slice(0, 1).toUpperCase() ?? "A"}</div></div>
         </header>
         <div className="px-5 py-6 sm:px-8 sm:py-8">{children}</div>
