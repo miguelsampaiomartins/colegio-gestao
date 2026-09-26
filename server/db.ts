@@ -233,7 +233,11 @@ export async function createSale(input: { items: Array<{ itemId: number; variant
 export async function listSales() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(sales).orderBy(desc(sales.createdAt), desc(sales.id)).limit(30);
+  const rows = await db.select().from(sales).orderBy(desc(sales.createdAt), desc(sales.id)).limit(30);
+  return Promise.all(rows.map(async sale => {
+    const items = await db.select({ itemName: inventoryItems.name, variantName: inventoryVariants.name, quantity: saleItems.quantity, unitPriceCents: saleItems.unitPriceCents, totalCents: saleItems.totalCents }).from(saleItems).leftJoin(inventoryItems, eq(saleItems.itemId, inventoryItems.id)).leftJoin(inventoryVariants, eq(saleItems.variantId, inventoryVariants.id)).where(eq(saleItems.saleId, sale.id)).orderBy(saleItems.id);
+    return { ...sale, items };
+  }));
 }
 
 export async function listIncidents() {
