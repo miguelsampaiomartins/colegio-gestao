@@ -15,6 +15,7 @@ import {
   listInventoryMovements,
   listStudents,
   recordInventoryMovement,
+  recordInventoryMovements,
   resolveIncident,
 } from "./db";
 
@@ -52,6 +53,9 @@ export const appRouter = router({
     inventoryMovement: protectedProcedure
       .input(z.object({ itemId: z.number().int().positive(), type: z.enum(["entry", "exit"]), quantity: z.number().int().positive(), reason: z.string().optional() }))
       .mutation(({ input }) => recordInventoryMovement(input)),
+    inventoryBulkMovement: protectedProcedure
+      .input(z.object({ type: z.enum(["entry", "exit"]), reason: z.string().optional(), items: z.array(z.object({ itemId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
+      .mutation(({ input }) => recordInventoryMovements(input)),
     incidents: protectedProcedure.query(() => listIncidents()),
     addIncident: protectedProcedure
       .input(z.object({ studentId: z.number().int().positive(), type: z.enum(["absence", "late", "homework", "book", "uniform", "behavior", "other"]), note: z.string().min(3) }))

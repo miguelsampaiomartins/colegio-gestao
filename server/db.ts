@@ -143,6 +143,26 @@ export async function recordInventoryMovement(input: { itemId: number; type: "en
   return (await db.select().from(inventoryItems).where(eq(inventoryItems.id, input.itemId)).limit(1))[0];
 }
 
+export async function recordInventoryMovements(input: { type: "entry" | "exit"; reason?: string; items: Array<{ itemId: number; quantity: number }> }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.transaction(async tx => {
+    const prepared: Array<{ itemId: number; type: "entry" | "exit"; quantity: number; reason?: string; nextQuantity: number }> = [];
+    for (const line of input.items) {
+      const item = await tx.select().from(inventoryItems).where(eq(inventoryItems.id, line.itemId)).limit(1);
+      if (!item[0]) throw new Error("Um dos itens selecionados não foi encontrado");
+      const nextQuantity = item[0].quantity + (input.type === "entry" ? line.quantity : -line.quantity);
+      if (nextQuantity < 0) throw new Error(`Estoque insuficiente para ${item[0].name}`);
+      prepared.push({ itemId: line.itemId, type: input.type, quantity: line.quantity, reason: input.reason, nextQuantity });
+    }
+    for (const line of prepared) {
+      await tx.insert(inventoryMovements).values({ itemId: line.itemId, type: line.type, quantity: line.quantity, reason: line.reason });
+      await tx.update(inventoryItems).set({ quantity: line.nextQuantity, updatedAt: new Date() }).where(eq(inventoryItems.id, line.itemId));
+    }
+    return prepared.length;
+  });
+}
+
 export async function listInventoryMovements() {
   const db = await getDb();
   if (!db) return [];
