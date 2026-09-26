@@ -9,9 +9,10 @@ import Students from "@/pages/Students";
 import Home from "@/pages/Home";
 import { Route, Switch } from "wouter";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import Sales from "@/pages/Sales";
 
 function Router() {
-  return <DashboardLayout><Switch><Route path="/" component={Home} /><Route path="/alunos" component={Students} /><Route path="/estoque" component={Inventory} /><Route path="/anotacoes" component={Notes} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch></DashboardLayout>;
+  return <DashboardLayout><Switch><Route path="/" component={Home} /><Route path="/alunos" component={Students} /><Route path="/estoque" component={Inventory} /><Route path="/vendas" component={Sales} /><Route path="/anotacoes" component={Notes} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch></DashboardLayout>;
 }
 
 function App() {

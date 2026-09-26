@@ -6,6 +6,9 @@ import {
   incidents,
   inventoryItems,
   inventoryMovements,
+  inventoryVariants,
+  saleItems,
+  sales,
   students,
   users,
 } from "../drizzle/schema";
@@ -93,20 +96,7 @@ export async function createStudent(input: typeof students.$inferInsert) {
 export async function listEnrollments() {
   const db = await getDb();
   if (!db) return [];
-  return db
-    .select({
-      id: enrollments.id,
-      studentId: enrollments.studentId,
-      studentName: students.name,
-      schoolYear: enrollments.schoolYear,
-      className: enrollments.className,
-      shift: enrollments.shift,
-      status: enrollments.status,
-      enrollmentDate: enrollments.enrollmentDate,
-    })
-    .from(enrollments)
-    .leftJoin(students, eq(enrollments.studentId, students.id))
-    .orderBy(desc(enrollments.enrollmentDate));
+  return db.select({ id: enrollments.id, studentId: enrollments.studentId, studentName: students.name, schoolYear: enrollments.schoolYear, className: enrollments.className, shift: enrollments.shift, status: enrollments.status, enrollmentDate: enrollments.enrollmentDate }).from(enrollments).leftJoin(students, eq(enrollments.studentId, students.id)).orderBy(desc(enrollments.enrollmentDate));
 }
 
 export async function createEnrollment(input: typeof enrollments.$inferInsert) {
@@ -120,9 +110,30 @@ export async function createEnrollment(input: typeof enrollments.$inferInsert) {
 export async function listInventory() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(inventoryItems).orderBy(inventoryItems.category, inventoryItems.name);
+  const items = await db.select().from(inventoryItems).orderBy(inventoryItems.category, inventoryItems.name);
+  return Promise.all(items.map(async item => {
+    const variants = await db.select().from(inventoryVariants).where(eq(inventoryVariants.itemId, item.id)).orderBy(inventoryVariants.id);
+    return { ...item, variants };
+  }));
 }
 
+export async function createInventoryProduct(input: { name: string; category: "uniform" | "book" | "other"; variants: Array<{ name: string; quantity: number; unitPriceCents: number }> }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  if (input.variants.length < 1 || input.variants.length > 10) throw new Error("O produto deve ter entre 1 e 10 variedades");
+  return db.transaction(async tx => {
+    const quantity = input.variants.reduce((sum, variant) => sum + variant.quantity, 0);
+    const price = input.variants[0]?.unitPriceCents ?? 0;
+    await tx.insert(inventoryItems).values({ name: input.name, category: input.category, quantity, unitPriceCents: price });
+    const created = await tx.select().from(inventoryItems).orderBy(desc(inventoryItems.id)).limit(1);
+    const item = created[0];
+    if (!item) throw new Error("Não foi possível criar o produto");
+    await tx.insert(inventoryVariants).values(input.variants.map(variant => ({ itemId: item.id, name: variant.name, quantity: variant.quantity, unitPriceCents: variant.unitPriceCents })));
+    return item;
+  });
+}
+
+/** Kept for compatibility with older callers. */
 export async function createInventoryItem(input: typeof inventoryItems.$inferInsert) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -166,40 +177,53 @@ export async function recordInventoryMovements(input: { type: "entry" | "exit"; 
 export async function listInventoryMovements() {
   const db = await getDb();
   if (!db) return [];
-  return db
-    .select({
-      id: inventoryMovements.id,
-      itemId: inventoryMovements.itemId,
-      itemName: inventoryItems.name,
-      itemSize: inventoryItems.size,
-      category: inventoryItems.category,
-      unitPriceCents: inventoryItems.unitPriceCents,
-      type: inventoryMovements.type,
-      quantity: inventoryMovements.quantity,
-      reason: inventoryMovements.reason,
-      createdAt: inventoryMovements.createdAt,
-    })
-    .from(inventoryMovements)
-    .leftJoin(inventoryItems, eq(inventoryMovements.itemId, inventoryItems.id))
-    .orderBy(desc(inventoryMovements.createdAt), desc(inventoryMovements.id));
+  return db.select({ id: inventoryMovements.id, itemId: inventoryMovements.itemId, variantId: inventoryMovements.variantId, itemName: inventoryItems.name, variantName: inventoryVariants.name, itemSize: inventoryItems.size, category: inventoryItems.category, unitPriceCents: inventoryVariants.unitPriceCents, fallbackUnitPriceCents: inventoryItems.unitPriceCents, type: inventoryMovements.type, quantity: inventoryMovements.quantity, reason: inventoryMovements.reason, createdAt: inventoryMovements.createdAt }).from(inventoryMovements).leftJoin(inventoryItems, eq(inventoryMovements.itemId, inventoryItems.id)).leftJoin(inventoryVariants, eq(inventoryMovements.variantId, inventoryVariants.id)).orderBy(desc(inventoryMovements.createdAt), desc(inventoryMovements.id));
+}
+
+export async function createSale(input: { items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  if (!input.items.length) throw new Error("Adicione pelo menos um item à venda");
+  return db.transaction(async tx => {
+    const normalizedItems = Array.from(input.items.reduce((map, line) => {
+      const key = `${line.itemId}:${line.variantId}`;
+      const previous = map.get(key);
+      map.set(key, previous ? { ...previous, quantity: previous.quantity + line.quantity } : line);
+      return map;
+    }, new Map<string, { itemId: number; variantId: number; quantity: number } >()).values());
+    const prepared: Array<{ itemId: number; variantId: number; quantity: number; unitPriceCents: number; totalCents: number; nextQuantity: number }> = [];
+    for (const line of normalizedItems) {
+      const variant = await tx.select().from(inventoryVariants).where(and(eq(inventoryVariants.id, line.variantId), eq(inventoryVariants.itemId, line.itemId))).limit(1);
+      if (!variant[0]) throw new Error("Uma das variedades selecionadas não foi encontrada");
+      const nextQuantity = variant[0].quantity - line.quantity;
+      if (nextQuantity < 0) throw new Error(`Estoque insuficiente para ${variant[0].name}`);
+      prepared.push({ itemId: line.itemId, variantId: line.variantId, quantity: line.quantity, unitPriceCents: variant[0].unitPriceCents, totalCents: variant[0].unitPriceCents * line.quantity, nextQuantity });
+    }
+    const totalCents = prepared.reduce((sum, line) => sum + line.totalCents, 0);
+    await tx.insert(sales).values({ totalCents });
+    const createdSale = await tx.select().from(sales).orderBy(desc(sales.id)).limit(1);
+    const sale = createdSale[0];
+    if (!sale) throw new Error("Não foi possível criar a venda");
+    for (const line of prepared) {
+      await tx.insert(saleItems).values({ saleId: sale.id, itemId: line.itemId, variantId: line.variantId, quantity: line.quantity, unitPriceCents: line.unitPriceCents, totalCents: line.totalCents });
+      await tx.update(inventoryVariants).set({ quantity: line.nextQuantity, updatedAt: new Date() }).where(eq(inventoryVariants.id, line.variantId));
+      await tx.update(inventoryItems).set({ quantity: sql`${inventoryItems.quantity} - ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryItems.id, line.itemId));
+      await tx.insert(inventoryMovements).values({ itemId: line.itemId, variantId: line.variantId, type: "exit", quantity: line.quantity, reason: `Venda #${sale.id}` });
+    }
+    return { saleId: sale.id, totalCents };
+  });
+}
+
+export async function listSales() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(sales).orderBy(desc(sales.createdAt), desc(sales.id)).limit(30);
 }
 
 export async function listIncidents() {
   const db = await getDb();
   if (!db) return [];
-  return db
-    .select({
-      id: incidents.id,
-      studentId: incidents.studentId,
-      studentName: students.name,
-      type: incidents.type,
-      note: incidents.note,
-      occurredAt: incidents.occurredAt,
-      resolved: incidents.resolved,
-    })
-    .from(incidents)
-    .leftJoin(students, eq(incidents.studentId, students.id))
-    .orderBy(desc(incidents.occurredAt));
+  return db.select({ id: incidents.id, studentId: incidents.studentId, studentName: students.name, type: incidents.type, note: incidents.note, occurredAt: incidents.occurredAt, resolved: incidents.resolved }).from(incidents).leftJoin(students, eq(incidents.studentId, students.id)).orderBy(desc(incidents.occurredAt));
 }
 
 export async function createIncident(input: typeof incidents.$inferInsert) {

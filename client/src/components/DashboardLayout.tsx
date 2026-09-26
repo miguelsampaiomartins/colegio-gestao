@@ -19,6 +19,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  ShoppingCart,
   UsersRound,
 } from "lucide-react";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
@@ -27,6 +28,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Visão geral", path: "/" },
   { icon: UsersRound, label: "Alunos e matrículas", path: "/alunos" },
   { icon: Archive, label: "Estoque", path: "/estoque" },
+  { icon: ShoppingCart, label: "Vendas", path: "/vendas" },
   { icon: ClipboardList, label: "Anotações", path: "/anotacoes" },
 ];
 

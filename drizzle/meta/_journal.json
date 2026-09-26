@@ -15,6 +15,13 @@
       "when": 1790363903650,
       "tag": "0001_slow_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1790382548874,
+      "tag": "0002_shallow_captain_marvel",
+      "breakpoints": true
     }
   ]
 }

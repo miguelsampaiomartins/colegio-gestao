@@ -7,12 +7,15 @@ import {
   createEnrollment,
   createIncident,
   createInventoryItem,
+  createInventoryProduct,
+  createSale,
   createStudent,
   getDashboardStats,
   listEnrollments,
   listIncidents,
   listInventory,
   listInventoryMovements,
+  listSales,
   listStudents,
   recordInventoryMovement,
   recordInventoryMovements,
@@ -47,6 +50,10 @@ export const appRouter = router({
       .mutation(({ input }) => createEnrollment(input)),
     inventory: protectedProcedure.query(() => listInventory()),
     inventoryHistory: protectedProcedure.query(() => listInventoryMovements()),
+    sales: protectedProcedure.query(() => listSales()),
+    addInventoryProduct: protectedProcedure
+      .input(z.object({ name: z.string().min(2), category: z.enum(["uniform", "book", "other"]), variants: z.array(z.object({ name: z.string().min(1), quantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) })).min(1).max(10) }))
+      .mutation(({ input }) => createInventoryProduct(input)),
     addInventoryItem: protectedProcedure
       .input(z.object({ name: z.string().min(2), category: z.enum(["uniform", "book", "other"]), size: z.string().optional(), quantity: z.number().int().min(0), minQuantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) }))
       .mutation(({ input }) => createInventoryItem(input)),
@@ -56,6 +63,9 @@ export const appRouter = router({
     inventoryBulkMovement: protectedProcedure
       .input(z.object({ type: z.enum(["entry", "exit"]), reason: z.string().optional(), items: z.array(z.object({ itemId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => recordInventoryMovements(input)),
+    createSale: protectedProcedure
+      .input(z.object({ items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
+      .mutation(({ input }) => createSale(input)),
     incidents: protectedProcedure.query(() => listIncidents()),
     addIncident: protectedProcedure
       .input(z.object({ studentId: z.number().int().positive(), type: z.enum(["absence", "late", "homework", "book", "uniform", "behavior", "other"]), note: z.string().min(3) }))

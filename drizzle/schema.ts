@@ -34,6 +34,7 @@ export const enrollments = mysqlTable("enrollments", {
   enrollmentDate: timestamp("enrollmentDate").defaultNow().notNull(),
 });
 
+/** A product, such as "Camiseta" or "Livro de matemática". */
 export const inventoryItems = mysqlTable("inventoryItems", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 160 }).notNull(),
@@ -45,13 +46,41 @@ export const inventoryItems = mysqlTable("inventoryItems", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+/** Product varieties, limited to 10 in the product registration UI. */
+export const inventoryVariants = mysqlTable("inventoryVariants", {
+  id: int("id").autoincrement().primaryKey(),
+  itemId: int("itemId").notNull(),
+  name: varchar("name", { length: 80 }).notNull(),
+  quantity: int("quantity").default(0).notNull(),
+  unitPriceCents: int("unitPriceCents").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const inventoryMovements = mysqlTable("inventoryMovements", {
   id: int("id").autoincrement().primaryKey(),
   itemId: int("itemId").notNull(),
+  variantId: int("variantId"),
   type: mysqlEnum("type", ["entry", "exit"]).notNull(),
   quantity: int("quantity").notNull(),
   reason: varchar("reason", { length: 240 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const sales = mysqlTable("sales", {
+  id: int("id").autoincrement().primaryKey(),
+  totalCents: int("totalCents").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const saleItems = mysqlTable("saleItems", {
+  id: int("id").autoincrement().primaryKey(),
+  saleId: int("saleId").notNull(),
+  itemId: int("itemId").notNull(),
+  variantId: int("variantId").notNull(),
+  quantity: int("quantity").notNull(),
+  unitPriceCents: int("unitPriceCents").notNull(),
+  totalCents: int("totalCents").notNull(),
 });
 
 export const incidents = mysqlTable("incidents", {
@@ -68,4 +97,7 @@ export type InsertUser = typeof users.$inferInsert;
 export type Student = typeof students.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type InventoryItem = typeof inventoryItems.$inferSelect;
+export type InventoryVariant = typeof inventoryVariants.$inferSelect;
+export type Sale = typeof sales.$inferSelect;
+export type SaleItem = typeof saleItems.$inferSelect;
 export type Incident = typeof incidents.$inferSelect;
