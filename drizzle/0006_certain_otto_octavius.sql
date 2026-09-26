@@ -1,0 +1,1 @@
+ALTER TABLE `sales` ADD `paymentMethod` enum('cash','pix','card','other') DEFAULT 'other' NOT NULL;

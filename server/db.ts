@@ -206,13 +206,22 @@ export async function addInventoryVariant(input: { itemId: number; name: string;
   });
 }
 
+export async function updateInventoryVariantPrice(input: { variantId: number; unitPriceCents: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const variant = await db.select().from(inventoryVariants).where(eq(inventoryVariants.id, input.variantId)).limit(1);
+  if (!variant[0]) throw new Error("Variedade não encontrada");
+  await db.update(inventoryVariants).set({ unitPriceCents: input.unitPriceCents, updatedAt: new Date() }).where(eq(inventoryVariants.id, input.variantId));
+  return (await db.select().from(inventoryVariants).where(eq(inventoryVariants.id, input.variantId)).limit(1))[0];
+}
+
 export async function listInventoryMovements() {
   const db = await getDb();
   if (!db) return [];
   return db.select({ id: inventoryMovements.id, itemId: inventoryMovements.itemId, variantId: inventoryMovements.variantId, itemName: inventoryItems.name, variantName: inventoryVariants.name, itemSize: inventoryItems.size, category: inventoryItems.category, unitPriceCents: inventoryVariants.unitPriceCents, fallbackUnitPriceCents: inventoryItems.unitPriceCents, type: inventoryMovements.type, quantity: inventoryMovements.quantity, reason: inventoryMovements.reason, createdAt: inventoryMovements.createdAt }).from(inventoryMovements).leftJoin(inventoryItems, eq(inventoryMovements.itemId, inventoryItems.id)).leftJoin(inventoryVariants, eq(inventoryMovements.variantId, inventoryVariants.id)).orderBy(desc(inventoryMovements.createdAt), desc(inventoryMovements.id));
 }
 
-export async function createSale(input: { discountType?: "fixed" | "percentage"; discountValue?: number; items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
+export async function createSale(input: { discountType?: "fixed" | "percentage"; discountValue?: number; paymentMethod?: "cash" | "pix" | "card" | "other"; items: Array<{ itemId: number; variantId: number; quantity: number }> }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   if (!input.items.length) throw new Error("Adicione pelo menos um item à venda");
@@ -237,7 +246,8 @@ export async function createSale(input: { discountType?: "fixed" | "percentage";
     const requestedDiscountCents = discountType === "percentage" ? Math.round(subtotalCents * Math.min(discountValue, 100) / 100) : Math.round(discountValue * 100);
     const discountCents = Math.min(requestedDiscountCents, subtotalCents);
     const totalCents = subtotalCents - discountCents;
-    await tx.insert(sales).values({ totalCents, discountCents, discountType });
+    const paymentMethod = input.paymentMethod ?? "other";
+    await tx.insert(sales).values({ totalCents, discountCents, discountType, paymentMethod });
     const createdSale = await tx.select().from(sales).orderBy(desc(sales.id)).limit(1);
     const sale = createdSale[0];
     if (!sale) throw new Error("Não foi possível criar a venda");
@@ -247,7 +257,7 @@ export async function createSale(input: { discountType?: "fixed" | "percentage";
       await tx.update(inventoryItems).set({ quantity: sql`${inventoryItems.quantity} - ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryItems.id, line.itemId));
       await tx.insert(inventoryMovements).values({ itemId: line.itemId, variantId: line.variantId, type: "exit", quantity: line.quantity, reason: `Venda #${sale.id}` });
     }
-    return { saleId: sale.id, subtotalCents, discountCents, discountType, totalCents };
+    return { saleId: sale.id, subtotalCents, discountCents, discountType, paymentMethod, totalCents };
   });
 }
 

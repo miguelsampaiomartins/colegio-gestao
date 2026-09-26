@@ -23,6 +23,7 @@ import {
   recordInventoryMovement,
   recordInventoryMovements,
   resolveIncident,
+  updateInventoryVariantPrice,
 } from "./db";
 
 const studentInput = z.object({
@@ -63,6 +64,9 @@ export const appRouter = router({
     addInventoryVariant: protectedProcedure
       .input(z.object({ itemId: z.number().int().positive(), name: z.string().min(1), quantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) }))
       .mutation(({ input }) => addInventoryVariant(input)),
+    updateInventoryVariantPrice: protectedProcedure
+      .input(z.object({ variantId: z.number().int().positive(), unitPriceCents: z.number().int().min(0) }))
+      .mutation(({ input }) => updateInventoryVariantPrice(input)),
     addInventoryItem: protectedProcedure
       .input(z.object({ name: z.string().min(2), category: z.enum(["uniform", "book", "other"]), size: z.string().optional(), quantity: z.number().int().min(0), minQuantity: z.number().int().min(0), unitPriceCents: z.number().int().min(0) }))
       .mutation(({ input }) => createInventoryItem(input)),
@@ -73,7 +77,7 @@ export const appRouter = router({
       .input(z.object({ type: z.enum(["entry", "exit"]), reason: z.string().optional(), items: z.array(z.object({ itemId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => recordInventoryMovements(input)),
     createSale: protectedProcedure
-      .input(z.object({ discountType: z.enum(["fixed", "percentage"]).optional(), discountValue: z.number().min(0).optional(), items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
+      .input(z.object({ discountType: z.enum(["fixed", "percentage"]).optional(), discountValue: z.number().min(0).optional(), paymentMethod: z.enum(["cash", "pix", "card", "other"]).optional(), items: z.array(z.object({ itemId: z.number().int().positive(), variantId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1) }))
       .mutation(({ input }) => createSale(input)),
     cancelSale: protectedProcedure
       .input(z.object({ saleId: z.number().int().positive() }))
