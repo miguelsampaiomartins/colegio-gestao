@@ -146,6 +146,19 @@ export async function createFirstOwner(input: { firstName: string; cpfFirstFour:
   });
 }
 
+/** Local recovery path: updates only the existing owner account and revokes its sessions. */
+export async function resetOwnerPassword(input: { username: string; newPassword: string }) {
+  const db = requireDatabase(await getDb());
+  const username = input.username.trim().toLowerCase();
+  const [owner] = await db.select({ id: staffAccounts.id, username: staffAccounts.username, fullName: staffAccounts.fullName, role: staffAccounts.role })
+    .from(staffAccounts).where(and(eq(staffAccounts.username, username), eq(staffAccounts.role, "owner"))).limit(1);
+  if (!owner) throw new Error("Conta de dono não encontrada. Confira o nome de usuário e tente novamente.");
+  const passwordHash = await hashPassword(input.newPassword);
+  await db.update(staffAccounts).set({ passwordHash, sessionVersion: sql`${staffAccounts.sessionVersion} + 1`, failedAttempts: 0, lockedUntil: null })
+    .where(and(eq(staffAccounts.id, owner.id), eq(staffAccounts.role, "owner")));
+  return { username: owner.username, fullName: owner.fullName };
+}
+
 export async function listStaff() {
   const db = requireDatabase(await getDb());
   return db.select({ id: staffAccounts.id, username: staffAccounts.username, fullName: staffAccounts.fullName,

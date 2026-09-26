@@ -57,6 +57,16 @@ Abra `http://localhost:3000` e entre com o nome de usuário mostrado pelo `owner
 
 Em **Equipe e acessos**, informe o nome completo, função, somente os quatro primeiros dígitos do CPF e uma **senha inicial forte** para cada funcionário. O sistema mostra o nome de usuário antes de salvar (exemplo: `amanda1234`). Compartilhe o usuário e a senha inicial com a pessoa por um canal privado; **não** coloque senhas no GitHub. O dono pode remover ou reativar o acesso sem apagar o histórico e pode redefinir a senha mediante confirmação de sua própria senha. Funcionários podem trocar a própria senha em **Minha conta**. Cada alteração de acesso ou senha encerra sessões anteriores.
 
+### Recuperar a senha esquecida do dono
+
+A senha existente não pode ser visualizada: o sistema guarda somente um hash criptográfico. Se o dono esquecer a senha, pare o servidor com **Ctrl+C**, abra o PowerShell na pasta `colegio-gestao` e execute:
+
+```powershell
+pnpm.cmd owner:reset
+```
+
+O assistente exige que o banco esteja em `localhost`, pede o nome de usuário do dono, solicita a confirmação literal `REDEFINIR DONO`, recebe a nova senha sem exibi-la e pede confirmação novamente. O comando altera apenas a senha do dono, não apaga alunos, matrículas, estoque, vendas ou funcionários, e encerra as sessões antigas. Digite a senha diretamente no terminal; não a envie por mensagem nem a salve no GitHub.
+
 ## Primeira instalação em outro computador
 
 Instale [Node.js 22.13+](https://nodejs.org/en/download), Git, pnpm 10 e MySQL. No PowerShell, se `npm.ps1` estiver bloqueado, use `npm.cmd install -g pnpm@10.4.1`. Clone o [repositório privado](https://github.com/miguelsampaiomartins/colegio-gestao), entre na pasta e rode `pnpm.cmd install`. Crie um banco **separado para testes** no MySQL; ajuste `DATABASE_URL` e `JWT_SECRET` no `.env` local. Depois siga os passos **2–6** acima. No macOS/Linux, use `pnpm` no lugar de `pnpm.cmd`.
@@ -68,6 +78,7 @@ Instale [Node.js 22.13+](https://nodejs.org/en/download), Git, pnpm 10 e MySQL. 
 | Aparece ainda “Entrar com Google” | Pare o site, confirme `VITE_AUTH_PROVIDER=password` no `.env` da pasta correta e reinicie `pnpm.cmd dev`. |
 | Erro de tabela `staffAccounts` | Pare o servidor, confirme o MySQL e rode `pnpm.cmd db:push` **no mesmo banco local**. |
 | `owner:init` diz que já há um dono | Use a conta criada anteriormente; o assistente não a substitui. |
+| Dono esqueceu a senha | Pare o servidor e execute `pnpm.cmd owner:reset`; o comando redefine a senha no banco local e encerra sessões antigas. |
 | Usuário ou senha inválidos | Confira o nome de usuário completo sem `+` (exemplo: `miguel1234`). Após cinco falhas, aguarde 15 minutos e tente a senha correta. |
 | `URI malformed` em `DATABASE_URL` | Codifique os caracteres reservados da senha para URL, como `@` → `%40`; não envie sua senha em mensagens. |
 | Login realizado, mas sem “Equipe e acessos” | Confirme que entrou na **conta do dono** inicializada por `owner:init`, não numa conta de funcionário. |
