@@ -1,22 +1,19 @@
 # Acompanhamento do projeto — autenticação Google
 
-## Concluído nesta atualização
+## Trabalho de implementação concluído
 
-- [x] Preservar o login Manus na versão hospedada por padrão.
-- [x] Adicionar modo opcional `VITE_AUTH_PROVIDER=google` para a instalação local.
-- [x] Validar estado OAuth, ID token, e-mails permitidos e sessões assinadas.
-- [x] Exibir instruções de configuração quando faltarem variáveis de ambiente.
-- [x] Atualizar `LOCALHOST.md` com as etapas do Google Cloud e do Windows.
-- [x] Testar checagem de tipos, suíte automatizada, build e rotas HTTP sem credenciais reais.
+- [x] Preservar o login Manus por padrão na versão hospedada.
+- [x] Adicionar modo opcional `VITE_AUTH_PROVIDER=google` à instalação local.
+- [x] Proteger o fluxo com estado OAuth, nonce, validação do ID token, e-mails permitidos e sessões assinadas.
+- [x] Mostrar diagnóstico de configuração na tela de entrada quando faltarem variáveis de ambiente.
+- [x] Atualizar `LOCALHOST.md` com os passos do Google Cloud e do Windows.
+- [x] Validar instalação, checagem de tipos, suíte automatizada, build e rotas HTTP sem credenciais reais.
+- [x] Confirmar que a versão hospedada mantém o login anterior.
 
-## Pendente do proprietário da instalação local
+## Configuração externa sob controle do proprietário
 
-- [ ] Criar aplicativo OAuth Web no Google Cloud e autorizar `http://localhost:3000/api/auth/google/callback`.
-- [ ] Guardar Client ID e Client Secret **somente** no arquivo `.env` local; configurar `GOOGLE_ALLOWED_EMAILS`.
-- [ ] Atualizar o clone no computador com `git pull origin main` e `pnpm.cmd install`, depois reiniciar `pnpm.cmd dev`.
-- [ ] Testar a entrada real com um e-mail permitido e usuário de teste do Google, sem compartilhar segredos.
+Para usar no próprio computador, o proprietário precisa criar um cliente OAuth Web no Google Cloud, autorizar o callback exato de localhost, colocar o Client ID e o Client Secret **somente** no `.env` local e informar `GOOGLE_ALLOWED_EMAILS`. Depois deve atualizar o clone com `git pull origin main`, instalar dependências, reiniciar o servidor e fazer um login real com um e-mail permitido. Essas etapas não podem ser executadas neste sandbox porque as credenciais e o Windows do proprietário não estão disponíveis aqui. O guia `LOCALHOST.md` traz o passo a passo sem exigir compartilhamento de segredos.
 
-## Melhorias futuras antes de uso real na escola
+## Fora do escopo desta correção
 
-- [ ] Separar permissões por papel para matrícula, estoque, vendas e cancelamentos.
-- [ ] Implantar backup do banco e plano de restauração.
+Antes do uso real com alunos e vendas, convém separar permissões por papel e implementar backups do banco. A lista de e-mails permitidos já bloqueia contas não autorizadas no modo Google, mas não diferencia funções internas.
