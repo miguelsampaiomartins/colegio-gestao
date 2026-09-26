@@ -190,6 +190,22 @@ export async function addInventoryVariantUnits(input: { reason?: string; items: 
   });
 }
 
+export async function addInventoryVariant(input: { itemId: number; name: string; quantity: number; unitPriceCents: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.transaction(async tx => {
+    const existing = await tx.select().from(inventoryVariants).where(eq(inventoryVariants.itemId, input.itemId));
+    if (existing.length >= 10) throw new Error("Cada produto pode ter no máximo 10 variedades");
+    await tx.insert(inventoryVariants).values({ itemId: input.itemId, name: input.name, quantity: input.quantity, unitPriceCents: input.unitPriceCents });
+    await tx.update(inventoryItems).set({ quantity: sql`${inventoryItems.quantity} + ${input.quantity}`, updatedAt: new Date() }).where(eq(inventoryItems.id, input.itemId));
+    const created = await tx.select().from(inventoryVariants).where(eq(inventoryVariants.itemId, input.itemId)).orderBy(desc(inventoryVariants.id)).limit(1);
+    const variant = created[0];
+    if (!variant) throw new Error("Não foi possível criar a variedade");
+    await tx.insert(inventoryMovements).values({ itemId: input.itemId, variantId: variant.id, type: "entry", quantity: input.quantity, reason: "Nova variedade cadastrada" });
+    return variant;
+  });
+}
+
 export async function listInventoryMovements() {
   const db = await getDb();
   if (!db) return [];
