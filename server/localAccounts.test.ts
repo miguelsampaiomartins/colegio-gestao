@@ -48,6 +48,12 @@ describe("login por senha", () => {
     vi.stubEnv("VITE_AUTH_PROVIDER", "google");
     await expect(appRouter.createCaller(fakeContext("owner")).staff.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
+  it("protege exclusão de funcionário e produto para funções sem permissão", async () => {
+    vi.stubEnv("VITE_AUTH_PROVIDER", "password");
+    const caller = appRouter.createCaller(fakeContext("staff"));
+    await expect(caller.staff.delete({ targetId: 9 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.school.deleteInventoryProduct({ itemId: 9 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
   it("rejeita login local quando o modo Google está ativo", async () => {
     vi.stubEnv("VITE_AUTH_PROVIDER", "google");
     await expect(appRouter.createCaller(fakeContext(null)).auth.login({ username: "amanda1234", password: "senha muito longa de teste" }))

@@ -237,6 +237,19 @@ export async function setStaffActive(id: number, active: boolean) {
   return true;
 }
 
+/** Permanently removes a staff login and its linked identity; audit rows remain append-only. */
+export async function deleteStaffAccount(id: number) {
+  const db = requireDatabase(await getDb());
+  const [target] = await db.select({ id: staffAccounts.id, userId: staffAccounts.userId, role: staffAccounts.role })
+    .from(staffAccounts).where(eq(staffAccounts.id, id)).limit(1);
+  if (!target || target.role !== "staff") throw new TRPCError({ code: "BAD_REQUEST", message: "Somente contas de funcionários podem ser excluídas." });
+  await db.transaction(async tx => {
+    await tx.delete(staffAccounts).where(and(eq(staffAccounts.id, id), eq(staffAccounts.role, "staff")));
+    await tx.delete(users).where(eq(users.id, target.userId));
+  });
+  return true;
+}
+
 async function verifyCurrentPassword(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, account: { id: number; passwordHash: string; failedAttempts: number; lockedUntil: number | null }, candidate: string) {
   const now = Date.now();
   const matches = await verifyPassword(candidate, account.passwordHash);

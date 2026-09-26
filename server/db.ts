@@ -73,7 +73,7 @@ export async function getDashboardStats() {
   const [studentRows, enrollmentRows, stockRows, incidentRows] = await Promise.all([
     db.select({ value: sql<number>`count(*)` }).from(students).where(eq(students.status, "active")),
     db.select({ value: sql<number>`count(*)` }).from(enrollments).where(eq(enrollments.status, "active")),
-    db.select({ value: sql<number>`count(*)` }).from(inventoryItems).where(sql`${inventoryItems.quantity} <= ${inventoryItems.minQuantity}`),
+    db.select({ value: sql<number>`count(*)` }).from(inventoryItems).where(and(eq(inventoryItems.active, 1), sql`${inventoryItems.quantity} <= ${inventoryItems.minQuantity}`)),
     db.select({ value: sql<number>`count(*)` }).from(incidents).where(eq(incidents.resolved, 0)),
   ]);
   return {
@@ -191,7 +191,7 @@ export async function createEnrollment(input: typeof enrollments.$inferInsert) {
 export async function listInventory() {
   const db = await getDb();
   if (!db) return [];
-  const items = await db.select().from(inventoryItems).orderBy(inventoryItems.category, inventoryItems.name);
+  const items = await db.select().from(inventoryItems).where(eq(inventoryItems.active, 1)).orderBy(inventoryItems.category, inventoryItems.name);
   return Promise.all(items.map(async item => {
     const variants = await db.select().from(inventoryVariants).where(eq(inventoryVariants.itemId, item.id)).orderBy(inventoryVariants.id);
     return { ...item, variants };
@@ -225,6 +225,16 @@ export async function updateInventoryMinimum(itemId: number, minQuantity: number
   return (await db.select().from(inventoryItems).where(eq(inventoryItems.id, itemId)).limit(1))[0];
 }
 
+/** Archives a product from the active catalog while preserving its variants and movement/sale history. */
+export async function deleteInventoryProduct(itemId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [item] = await db.select({ id: inventoryItems.id, active: inventoryItems.active }).from(inventoryItems).where(eq(inventoryItems.id, itemId)).limit(1);
+  if (!item || !item.active) throw new TRPCError({ code: "NOT_FOUND", message: "Produto não encontrado ou já excluído." });
+  await db.update(inventoryItems).set({ active: 0, updatedAt: new Date() }).where(and(eq(inventoryItems.id, itemId), eq(inventoryItems.active, 1)));
+  return true;
+}
+
 export async function createInventoryProduct(input: { name: string; category: string; minQuantity: number; variants: Array<{ name: string; quantity: number; unitPriceCents: number }> }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -255,8 +265,8 @@ export async function createInventoryItem(input: typeof inventoryItems.$inferIns
 export async function recordInventoryMovement(input: { itemId: number; type: "entry" | "exit"; quantity: number; reason?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  const item = await db.select().from(inventoryItems).where(eq(inventoryItems.id, input.itemId)).limit(1);
-  if (!item[0]) throw new Error("Item not found");
+  const item = await db.select().from(inventoryItems).where(and(eq(inventoryItems.id, input.itemId), eq(inventoryItems.active, 1))).limit(1);
+  if (!item[0]) throw new Error("Produto não encontrado ou já excluído");
   const nextQuantity = item[0].quantity + (input.type === "entry" ? input.quantity : -input.quantity);
   if (nextQuantity < 0) throw new Error("Estoque insuficiente para esta saída");
   await db.insert(inventoryMovements).values(input);
@@ -270,8 +280,8 @@ export async function recordInventoryMovements(input: { type: "entry" | "exit"; 
   return db.transaction(async tx => {
     const prepared: Array<{ itemId: number; type: "entry" | "exit"; quantity: number; reason?: string; nextQuantity: number }> = [];
     for (const line of input.items) {
-      const item = await tx.select().from(inventoryItems).where(eq(inventoryItems.id, line.itemId)).limit(1);
-      if (!item[0]) throw new Error("Um dos itens selecionados não foi encontrado");
+      const item = await tx.select().from(inventoryItems).where(and(eq(inventoryItems.id, line.itemId), eq(inventoryItems.active, 1))).limit(1);
+      if (!item[0]) throw new Error("Um dos itens selecionados não foi encontrado ou já foi excluído");
       const nextQuantity = item[0].quantity + (input.type === "entry" ? line.quantity : -line.quantity);
       if (nextQuantity < 0) throw new Error(`Estoque insuficiente para ${item[0].name}`);
       prepared.push({ itemId: line.itemId, type: input.type, quantity: line.quantity, reason: input.reason, nextQuantity });
@@ -290,6 +300,8 @@ export async function addInventoryVariantUnits(input: { reason?: string; items: 
   if (!input.items.length) throw new Error("Informe pelo menos uma quantidade");
   return db.transaction(async tx => {
     for (const line of input.items) {
+      const [item] = await tx.select({ active: inventoryItems.active }).from(inventoryItems).where(and(eq(inventoryItems.id, line.itemId), eq(inventoryItems.active, 1))).limit(1);
+      if (!item) throw new Error("Um dos produtos selecionados não foi encontrado ou já foi excluído");
       const variant = await tx.select().from(inventoryVariants).where(and(eq(inventoryVariants.id, line.variantId), eq(inventoryVariants.itemId, line.itemId))).limit(1);
       if (!variant[0]) throw new Error("Uma das variedades selecionadas não foi encontrada");
       await tx.update(inventoryVariants).set({ quantity: sql`${inventoryVariants.quantity} + ${line.quantity}`, updatedAt: new Date() }).where(eq(inventoryVariants.id, line.variantId));
@@ -304,6 +316,8 @@ export async function addInventoryVariant(input: { itemId: number; name: string;
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   return db.transaction(async tx => {
+    const [item] = await tx.select({ active: inventoryItems.active }).from(inventoryItems).where(and(eq(inventoryItems.id, input.itemId), eq(inventoryItems.active, 1))).limit(1);
+    if (!item) throw new Error("Produto não encontrado ou já excluído");
     const existing = await tx.select().from(inventoryVariants).where(eq(inventoryVariants.itemId, input.itemId));
     if (existing.length >= 10) throw new Error("Cada produto pode ter no máximo 10 variedades");
     await tx.insert(inventoryVariants).values({ itemId: input.itemId, name: input.name, quantity: input.quantity, unitPriceCents: input.unitPriceCents });
@@ -354,6 +368,8 @@ export async function createSale(input: { enrollmentId?: number; discountType?: 
     }, new Map<string, { itemId: number; variantId: number; quantity: number } >()).values());
     const prepared: Array<{ itemId: number; variantId: number; quantity: number; unitPriceCents: number; totalCents: number; nextQuantity: number }> = [];
     for (const line of normalizedItems) {
+      const [item] = await tx.select({ active: inventoryItems.active }).from(inventoryItems).where(and(eq(inventoryItems.id, line.itemId), eq(inventoryItems.active, 1))).limit(1);
+      if (!item) throw new Error("Um dos produtos selecionados não foi encontrado ou já foi excluído");
       const variant = await tx.select().from(inventoryVariants).where(and(eq(inventoryVariants.id, line.variantId), eq(inventoryVariants.itemId, line.itemId))).limit(1);
       if (!variant[0]) throw new Error("Uma das variedades selecionadas não foi encontrada");
       const nextQuantity = variant[0].quantity - line.quantity;

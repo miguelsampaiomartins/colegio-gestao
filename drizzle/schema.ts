@@ -105,6 +105,7 @@ export const inventoryItems = mysqlTable("inventoryItems", {
   quantity: int("quantity").default(0).notNull(),
   minQuantity: int("minQuantity").default(5).notNull(),
   unitPriceCents: int("unitPriceCents").default(0).notNull(),
+  active: int("active").default(1).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 

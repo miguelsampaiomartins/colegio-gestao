@@ -6,7 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { googleAuthStatus, googleSessionCookieOptions } from "./googleAuth";
 import { LOCAL_COOKIE_NAME, addStaff, changeOwnPassword, listStaff, localAuthStatus, localCookieOptions,
-  localModeEnabled, localSessionMaxAge, loginWithPassword, makeLocalSession, resetStaffPassword, setStaffActive,
+  localModeEnabled, localSessionMaxAge, loginWithPassword, makeLocalSession, resetStaffPassword, setStaffActive, deleteStaffAccount,
   listStaffRoles, createStaffRole, updateStaffRole } from "./localAccounts";
 import {
   createEnrollment,
@@ -19,6 +19,7 @@ import {
   createSale,
   createStudent,
   createInventoryCategory,
+  deleteInventoryProduct,
   getSchoolProfile,
   getDashboardStats,
   listEnrollments,
@@ -111,6 +112,8 @@ export const appRouter = router({
       .mutation(({ input }) => addStaff(input)),
     setActive: ownerProcedure.input(z.object({ id: z.number().int().positive(), active: z.boolean() }))
       .mutation(({ input }) => setStaffActive(input.id, input.active)),
+    delete: ownerProcedure.input(z.object({ targetId: z.number().int().positive() }))
+      .mutation(({ input }) => deleteStaffAccount(input.targetId)),
     resetPassword: ownerProcedure.input(z.object({ targetId: z.number().int().positive(), ownerPassword: z.string().min(1).max(128), newPassword: z.string().min(8).max(128) }))
       .mutation(({ ctx, input }) => resetStaffPassword({ ...input, ownerUserId: ctx.user.id })),
   }),
@@ -139,6 +142,7 @@ export const appRouter = router({
     inventoryCategories: permissionProcedure("inventory").query(() => listInventoryCategories()),
     createInventoryCategory: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(80) })).mutation(({ input }) => createInventoryCategory(input.name)),
     updateInventoryMinimum: permissionProcedure("inventory").input(z.object({ itemId: z.number().int().positive(), minQuantity: z.number().int().min(0).max(100000) })).mutation(({ input }) => updateInventoryMinimum(input.itemId, input.minQuantity)),
+    deleteInventoryProduct: permissionProcedure("inventory").input(z.object({ itemId: z.number().int().positive() })).mutation(({ input }) => deleteInventoryProduct(input.itemId)),
     inventoryHistory: permissionProcedure("inventory").query(() => listInventoryMovements()),
     sales: permissionProcedure("sales").query(() => listSales()),
     addInventoryProduct: permissionProcedure("inventory")

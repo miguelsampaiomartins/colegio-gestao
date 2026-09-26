@@ -111,3 +111,9 @@ Depois de atualizar o clone, pare o servidor e execute `pnpm.cmd db:push` no mes
 Em **Equipe e acessos**, o dono pode criar uma função, marcar os módulos permitidos e depois selecionar essa função ao cadastrar cada funcionário. As opções são **Visão geral**, **Alunos e matrículas**, **Estoque**, **Vendas** e **Anotações**. O bloqueio é aplicado no servidor e também na navegação; o dono continua com acesso total. Funcionários antigos sem função vinculada mantêm temporariamente os acessos operacionais anteriores para evitar perda de acesso durante a atualização.
 
 Na aba **Estoque**, o cadastro aceita uma categoria criada pelo dono e um **estoque mínimo**. Quando a quantidade total de um produto fica igual ou abaixo do mínimo, aparece o alerta de reposição. O mínimo pode ser alterado no próprio cartão do produto e as categorias podem ser criadas na seção “Categorias de produtos”.
+
+### Exclusão de produtos e funcionários
+
+Na aba **Estoque**, o dono ou funcionário com permissão de estoque pode clicar em **Excluir** em um produto e confirmar a operação. O produto é arquivado: deixa de aparecer no catálogo e não pode ser vendido ou movimentado, mas suas variedades, vendas anteriores, movimentações e recibos continuam preservados para consulta.
+
+Na aba **Equipe e acessos**, somente o dono pode clicar em **Excluir funcionário** e confirmar. A conta e o acesso são removidos definitivamente, as sessões deixam de funcionar e o histórico geral de auditoria é preservado. O dono não pode ser excluído por esse painel. Use a remoção de acesso quando quiser apenas bloquear temporariamente e manter a conta para reativação posterior.

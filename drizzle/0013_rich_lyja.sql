@@ -1,0 +1,1 @@
+ALTER TABLE `inventoryItems` ADD `active` int DEFAULT 1 NOT NULL;

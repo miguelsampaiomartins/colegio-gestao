@@ -77,3 +77,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Reduzir o mínimo de novas senhas de 15 para 8 caracteres em cadastro, troca e recuperação do dono.
 - [x] Atualizar validações de backend, scripts de terminal, formulários e documentação.
 - [x] Confirmar que 8 caracteres são aceitos, 7 são recusados; TypeScript, 34 testes e build aprovados.
+
+
+## Exclusão segura — 26/09/2026
+
+- [x] Adicionar arquivamento de produtos no estoque, mantendo variedades, vendas, movimentações e recibos históricos.
+- [x] Impedir vendas e movimentações futuras em produtos arquivados.
+- [x] Adicionar exclusão definitiva de funcionários apenas pelo dono, sem permitir exclusão do dono e preservando auditoria.
+- [x] Incluir confirmações visíveis, mensagens claras e registrar as ações no histórico de auditoria.
+- [x] Aplicar migração aditiva `0013_rich_lyja.sql`, executar 35 testes, TypeScript, build e verificação visual desktop/mobile.
