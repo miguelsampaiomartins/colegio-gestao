@@ -7,7 +7,6 @@ import { TRPCError } from "@trpc/server";
 import { staffAccounts, staffRoles, users, type User } from "../drizzle/schema";
 import { allStaffPermissions, permissionKeys, type PermissionKey } from "../shared/permissions";
 import { getDb } from "./db";
-import { googleSessionCookieOptions } from "./googleAuth";
 
 export const LOCAL_COOKIE_NAME = "school_local_session";
 const COST = 32768;
@@ -26,7 +25,8 @@ const invalidLogin = () => new TRPCError({ code: "UNAUTHORIZED", message: "Usuá
 
 export type LocalRole = "owner" | "staff";
 export type LocalUser = User & { localRole: LocalRole; localPermissions: PermissionKey[] };
-export function localModeEnabled() { return process.env.VITE_AUTH_PROVIDER === "password"; }
+/** The school installation uses local username/password authentication exclusively. */
+export function localModeEnabled() { return true; }
 export function localAuthStatus() {
   const missing: string[] = [];
   if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
@@ -103,7 +103,11 @@ export async function loginWithPassword(username: string, password: string, ip: 
   return { account, user };
 }
 
-export function localCookieOptions(req: Request) { return googleSessionCookieOptions(req); }
+export function localCookieOptions(req: Request) {
+  const forwarded = req.headers["x-forwarded-proto"];
+  const secure = req.secure || req.protocol === "https" || (typeof forwarded === "string" && forwarded.split(",").some(value => value.trim() === "https"));
+  return { httpOnly: true as const, sameSite: "lax" as const, secure, path: "/" as const };
+}
 export async function makeLocalSession(account: { id: number; sessionVersion: number }) {
   if (!localAuthStatus().configured) throw new Error("JWT_SECRET is not configured");
   return new SignJWT({ version: account.sessionVersion })

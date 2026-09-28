@@ -127,3 +127,8 @@ Na aba **Vendas**, use o campo “Buscar aluno, matrícula ou turma” para loca
 A aba **Anotações** funciona como uma agenda escolar: ao registrar uma infração, informe aluno, data, tipo e descrição. Os registros aparecem agrupados por dia e podem ser filtrados por data, aluno, descrição, tipo ou situação em aberto/resolvida.
 
 A seção **Histórico de infrações por aluno** permite pesquisar e selecionar um aluno para consultar todas as ocorrências dele, com data, tipo, descrição e situação.
+
+
+### Login local exclusivo
+
+O sistema agora utiliza somente **nome de usuário e senha**. O login Google e os fluxos OAuth não são usados pelo servidor ou pela tela de entrada. Mantenha `DATABASE_URL` e `JWT_SECRET` configurados no `.env`; a linha `VITE_AUTH_PROVIDER=password` pode permanecer para compatibilidade com instalações antigas.

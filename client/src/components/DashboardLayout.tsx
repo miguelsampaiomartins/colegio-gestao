@@ -3,7 +3,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -39,7 +38,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (loading) return <DashboardLayoutSkeleton />;
 
   if (!user) {
-    const google = provider.data?.mode === "google";
     const local = provider.data?.mode === "password";
     const error = new URLSearchParams(window.location.search).get("login_error");
     return <div className="school-login grid min-h-screen bg-[#f4f7f3] lg:grid-cols-[minmax(360px,44%)_1fr]">
@@ -60,9 +58,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Button disabled={!provider.data?.configured || login.isPending} className="h-12 w-full rounded-xl bg-[#147a6e] text-sm font-bold text-white shadow-[0_10px_22px_rgba(20,122,110,.19)] hover:bg-[#0f655d] disabled:opacity-50">{login.isPending ? "Entrando..." : "Entrar no sistema"}<ArrowUpRight className="ml-2 h-4 w-4" /></Button>
             {login.error && <p role="alert" className="text-center text-sm font-semibold text-[#ac4c3d]">{login.error.message}</p>}
             <p className="text-center text-xs leading-5 text-[#647a7d]">Esqueceu a senha? Peça ao dono do colégio para redefini-la.</p>
-          </form> : <Button disabled={provider.isLoading || provider.isError || !provider.data?.configured} onClick={() => google ? window.location.assign("/api/auth/google/start") : startLogin()} className="mt-8 h-12 w-full rounded-xl bg-[#147a6e] text-sm font-bold text-white hover:bg-[#0f655d] disabled:opacity-50">{google ? "Entrar com Google" : "Entrar no sistema"}<LogIn className="ml-2 h-4 w-4" /></Button>}
+          </form> : <p className="mt-8 rounded-xl bg-[#fff2eb] p-3 text-center text-sm text-[#a84434]">Configure o banco local e a chave de sessão para entrar.</p>}
           {error && <p role="alert" className="mt-5 text-sm font-semibold text-[#ac4c3d]">{error === "cancelled" ? "O login foi cancelado. Tente novamente." : "Não foi possível concluir o login. Confira as credenciais e tente novamente."}</p>}
-          {provider.data && !provider.data.configured && <p role="alert" className="mt-5 rounded-xl bg-[#fff2eb] p-3 text-sm leading-5 text-[#a84434]">{google ? `Configure o Google no .env e reinicie o servidor: ${provider.data.missing.join(", ")}.` : local ? `Configure o banco e a chave de sessão: ${provider.data.missing.join(", ")}.` : "Configure o provedor de login antes de entrar."}</p>}
+          {provider.data && !provider.data.configured && <p role="alert" className="mt-5 rounded-xl bg-[#fff2eb] p-3 text-sm leading-5 text-[#a84434]">Configure o banco e a chave de sessão: {provider.data.missing.join(", ")}.</p>}
           {provider.isError && <p role="alert" className="mt-5 text-sm text-[#ac4c3d]">Não foi possível consultar a configuração de login. Verifique o servidor.</p>}
         </div></div>
         <p className="px-5 pb-7 text-center text-[11px] font-medium text-[#81948f]">Ambiente de trabalho reservado · Colégio Gestão</p>

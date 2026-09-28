@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
-import { hashPassword, verifyPassword, makeUsername, localAuthStatus, makeLocalSession, LOCAL_COOKIE_NAME } from "./localAccounts";
+import { hashPassword, verifyPassword, makeUsername, localAuthStatus, localModeEnabled, makeLocalSession, LOCAL_COOKIE_NAME } from "./localAccounts";
 import type { TrpcContext } from "./_core/context";
 
 afterEach(() => vi.unstubAllEnvs());
@@ -41,12 +41,11 @@ describe("login por senha", () => {
     const token = await makeLocalSession({ id: 7, sessionVersion: 3 });
     expect(token.split(".")).toHaveLength(3);
   });
-  it("nega a área do dono para funcionário e visitante, inclusive se o usuário OAuth for admin", async () => {
+  it("mantém o acesso administrativo exclusivamente no login local", async () => {
     vi.stubEnv("VITE_AUTH_PROVIDER", "password");
+    expect(localModeEnabled()).toBe(true);
     await expect(appRouter.createCaller(fakeContext("staff")).staff.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(appRouter.createCaller(fakeContext(null)).staff.list()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
-    vi.stubEnv("VITE_AUTH_PROVIDER", "google");
-    await expect(appRouter.createCaller(fakeContext("owner")).staff.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
   it("protege exclusão de funcionário e produto para funções sem permissão", async () => {
     vi.stubEnv("VITE_AUTH_PROVIDER", "password");
@@ -54,11 +53,6 @@ describe("login por senha", () => {
     await expect(caller.staff.delete({ targetId: 9 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.school.deleteInventoryProduct({ itemId: 9 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.school.incidentsByStudent({ studentId: 9 })).rejects.toMatchObject({ code: "FORBIDDEN" });
-  });
-  it("rejeita login local quando o modo Google está ativo", async () => {
-    vi.stubEnv("VITE_AUTH_PROVIDER", "google");
-    await expect(appRouter.createCaller(fakeContext(null)).auth.login({ username: "amanda1234", password: "senha muito longa de teste" }))
-      .rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
   });
   it("faz logout limpando apenas o cookie de senha no modo local", async () => {
     vi.stubEnv("VITE_AUTH_PROVIDER", "password");

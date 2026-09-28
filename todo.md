@@ -104,3 +104,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Renomear o fluxo para infrações e ocorrências, mantendo os tipos existentes.
 - [x] Criar histórico completo de infrações por aluno com busca, situação e data.
 - [x] Validar TypeScript, 35 testes, build e visual desktop/mobile.
+
+
+## Login local exclusivo — 27/09/2026
+
+- [x] Fixar o backend no modo de autenticação por usuário e senha.
+- [x] Remover a interface de login Google e os redirecionamentos OAuth automáticos.
+- [x] Remover o registro de rotas OAuth/Google da inicialização do servidor.
+- [x] Usar cookie de sessão local com limpeza correta no logout.
+- [x] Atualizar documentação e validar TypeScript, 34 testes, build e tela de login.

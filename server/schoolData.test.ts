@@ -56,7 +56,7 @@ describe("dados escolares", () => {
     expect(groupInventoryHistory(rows).map(group => group.kind)).toEqual(["single", "single", "single", "single", "return"]);
   });
   it("recusa CPF inválido e telefones duplicados antes de acessar o banco", async () => {
-    const ctx = { user: { id: 1, openId: "test", role: "user", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() } } as TrpcContext;
+    const ctx = { user: { id: 1, openId: "test", role: "admin", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() }, localRole: "owner" } as TrpcContext;
     const caller = appRouter.createCaller(ctx);
     const valid = { name: "Aluno Exemplo", grade: "5º ano", guardianName: "Responsável Exemplo", cpf: "529.982.247-25", guardianCpf: "168.995.350-09", address: "Rua de Exemplo, 123", guardianEmail: "teste@example.invalid", phones: ["(11) 99999-9999"] };
     await expect(caller.school.addStudent({ ...valid, cpf: "111.111.111-11" })).rejects.toMatchObject({ code: "BAD_REQUEST" });

@@ -1,10 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { googleAuthStatus, googleSessionCookieOptions } from "./googleAuth";
 import { LOCAL_COOKIE_NAME, addStaff, changeOwnPassword, listStaff, localAuthStatus, localCookieOptions,
   localModeEnabled, localSessionMaxAge, loginWithPassword, makeLocalSession, resetStaffPassword, setStaffActive, deleteStaffAccount,
   listStaffRoles, createStaffRole, updateStaffRole } from "./localAccounts";
@@ -78,7 +75,7 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(({ ctx }) => ctx.user ? { ...ctx.user, localRole: ctx.localRole ?? null, localPermissions: ctx.localPermissions ?? [] } : null),
-    provider: publicProcedure.query(() => localModeEnabled() ? localAuthStatus() : googleAuthStatus()),
+    provider: publicProcedure.query(() => localAuthStatus()),
     login: publicProcedure.input(z.object({ username: z.string().min(1).max(64), password: z.string().min(1).max(128) }))
       .mutation(async ({ ctx, input }) => {
         const { account, user } = await loginWithPassword(input.username, input.password, ctx.req.socket?.remoteAddress ?? "unknown");
@@ -95,13 +92,8 @@ export const appRouter = router({
         return { success: true } as const;
       }),
     logout: publicProcedure.mutation(async ({ ctx }) => {
-      if (localModeEnabled()) {
-        await safeRecordAction(ctx.user, ctx.localRole, "auth.logout");
-        ctx.res.clearCookie(LOCAL_COOKIE_NAME, localCookieOptions(ctx.req));
-        return { success: true } as const;
-      }
-      const cookieOptions = googleAuthStatus().mode === "google" ? googleSessionCookieOptions(ctx.req) : getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      await safeRecordAction(ctx.user, ctx.localRole, "auth.logout");
+      ctx.res.clearCookie(LOCAL_COOKIE_NAME, { ...localCookieOptions(ctx.req), maxAge: -1 });
       return { success: true } as const;
     }),
   }),

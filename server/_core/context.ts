@@ -1,9 +1,7 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { authenticateGoogleRequest, googleModeEnabled } from "../googleAuth";
 import { authenticateLocalRequest, localModeEnabled, type LocalRole } from "../localAccounts";
 import type { PermissionKey } from "../../shared/permissions";
-import { sdk } from "./sdk";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -23,8 +21,6 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
       user = local;
       localRole = local?.localRole ?? null;
       localPermissions = local?.localPermissions ?? [];
-    } else {
-      user = googleModeEnabled() ? await authenticateGoogleRequest(opts.req) : await sdk.authenticateRequest(opts.req);
     }
   } catch {
     // Authentication is optional for public procedures; fail closed on errors.
