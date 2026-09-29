@@ -15,6 +15,7 @@ import {
   cancelSale,
   createSale,
   createStudent,
+  createStudentWithEnrollment,
   createInventoryCategory,
   deleteInventoryProduct,
   getSchoolProfile,
@@ -51,6 +52,11 @@ const studentInput = z.object({
   guardianEmail: z.email().max(320),
   phones: z.array(phoneInput).min(1).max(20).refine(values => new Set(values).size === values.length, "Não repita telefones."),
   birthDate: z.string().optional(),
+});
+const studentWithEnrollmentInput = studentInput.extend({
+  schoolYear: z.string().trim().min(4).max(9),
+  className: z.string().trim().min(1).max(80),
+  shift: z.enum(["morning", "afternoon", "fulltime"]),
 });
 
 const auditedProcedure = protectedProcedure.use(async ({ ctx, path, getRawInput, next }) => {
@@ -128,6 +134,7 @@ export const appRouter = router({
     })).mutation(({ input }) => saveSchoolProfile(input)),
     students: permissionProcedure("students").query(() => listStudents()),
     addStudent: permissionProcedure("students").input(studentInput).mutation(({ input }) => createStudent(input)),
+    addStudentWithEnrollment: permissionProcedure("students").input(studentWithEnrollmentInput).mutation(({ input }) => createStudentWithEnrollment(input)),
     enrollments: permissionProcedure("students").query(() => listEnrollments()),
     addEnrollment: permissionProcedure("students")
       .input(z.object({ studentId: z.number().int().positive(), schoolYear: z.string().min(4), className: z.string().min(1), shift: z.enum(["morning", "afternoon", "fulltime"]) }))

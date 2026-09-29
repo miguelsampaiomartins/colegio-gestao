@@ -132,3 +132,8 @@ A seção **Histórico de infrações por aluno** permite pesquisar e selecionar
 ### Login local exclusivo
 
 O sistema agora utiliza somente **nome de usuário e senha**. O login Google e os fluxos OAuth não são usados pelo servidor ou pela tela de entrada. Mantenha `DATABASE_URL` e `JWT_SECRET` configurados no `.env`; a linha `VITE_AUTH_PROVIDER=password` pode permanecer para compatibilidade com instalações antigas.
+
+
+### Cadastro integrado de aluno e matrícula
+
+Na aba **Alunos e matrículas**, o botão **Novo aluno + matrícula** abre um único formulário. Além dos dados do aluno e do responsável, informe o ano letivo, a turma e o turno da primeira matrícula. Ao salvar, o sistema grava aluno, telefones e matrícula em uma única transação: se qualquer etapa falhar, nenhum cadastro parcial fica salvo. O número `MAT-00000000` é gerado automaticamente e aparece na confirmação. O botão **Nova matrícula** continua disponível para vincular uma matrícula adicional a um aluno já cadastrado.

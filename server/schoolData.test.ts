@@ -61,5 +61,6 @@ describe("dados escolares", () => {
     const valid = { name: "Aluno Exemplo", grade: "5º ano", guardianName: "Responsável Exemplo", cpf: "529.982.247-25", guardianCpf: "168.995.350-09", address: "Rua de Exemplo, 123", guardianEmail: "teste@example.invalid", phones: ["(11) 99999-9999"] };
     await expect(caller.school.addStudent({ ...valid, cpf: "111.111.111-11" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(caller.school.addStudent({ ...valid, phones: ["+55 (11) 99999-9999", "11999999999"] })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.school.addStudentWithEnrollment({ ...valid, schoolYear: "2026", className: "", shift: "morning" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

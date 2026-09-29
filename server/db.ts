@@ -114,6 +114,29 @@ export async function createStudent(input: Omit<typeof students.$inferInsert, "g
   }
 }
 
+export async function createStudentWithEnrollment(input: Omit<typeof students.$inferInsert, "guardianPhone"> & { phones: string[]; schoolYear: string; className: string; shift: typeof enrollments.$inferInsert.shift }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const { phones, schoolYear, className, shift, ...student } = input;
+  try {
+    return await db.transaction(async tx => {
+      const [insertedStudent] = await tx.insert(students).values({ ...student, guardianPhone: phones[0] });
+      await tx.insert(studentPhones).values(phones.map((number, position) => ({ studentId: insertedStudent.insertId, number, position })));
+      const [insertedEnrollment] = await tx.insert(enrollments).values({ studentId: insertedStudent.insertId, schoolYear, className, shift, status: "active" });
+      const [createdStudent] = await tx.select().from(students).where(eq(students.id, insertedStudent.insertId)).limit(1);
+      const [createdEnrollment] = await tx.select({ id: enrollments.id, studentId: enrollments.studentId, studentName: students.name, schoolYear: enrollments.schoolYear, className: enrollments.className, shift: enrollments.shift, status: enrollments.status, enrollmentDate: enrollments.enrollmentDate }).from(enrollments).leftJoin(students, eq(enrollments.studentId, students.id)).where(eq(enrollments.id, insertedEnrollment.insertId)).limit(1);
+      if (!createdStudent || !createdEnrollment) throw new Error("Cadastro criado, mas não foi possível recuperar os dados.");
+      return { student: { ...createdStudent, phones }, enrollment: { ...createdEnrollment, enrollmentNumber: formatEnrollmentNumber(createdEnrollment.id) } };
+    });
+  } catch (error) {
+    const dbError = error as { code?: string; cause?: { code?: string } };
+    if (dbError.code === "ER_DUP_ENTRY" || dbError.cause?.code === "ER_DUP_ENTRY") {
+      throw new TRPCError({ code: "CONFLICT", message: "Este CPF de aluno já está cadastrado." });
+    }
+    throw error;
+  }
+}
+
 export async function listEnrollments() {
   const db = await getDb();
   if (!db) return [];

@@ -113,3 +113,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Remover o registro de rotas OAuth/Google da inicialização do servidor.
 - [x] Usar cookie de sessão local com limpeza correta no logout.
 - [x] Atualizar documentação e validar TypeScript, 34 testes, build e tela de login.
+
+
+## Cadastro integrado de aluno e matrícula — 29/09/2026
+
+- [x] Criar operação transacional para salvar aluno, telefones e primeira matrícula juntos.
+- [x] Adicionar ano letivo, turma e turno ao formulário de novo aluno.
+- [x] Mostrar confirmação com o número automático da matrícula.
+- [x] Manter Nova matrícula para alunos já cadastrados.
+- [x] Validar TypeScript, 34 testes e build de produção.
