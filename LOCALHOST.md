@@ -152,3 +152,8 @@ Na lista de alunos, clique em **Ver cadastro** e depois em **Editar**. É possí
 ### Turma na edição do aluno
 
 No formulário **Editar aluno matriculado**, o campo **Turma matriculada** agora é um seletor. Ele lista somente as turmas padronizadas existentes no sistema. Ao salvar, a matrícula ativa do aluno é transferida para a turma escolhida; o número da matrícula e os históricos permanecem os mesmos.
+
+
+### Sincronização após editar matrícula
+
+Ao editar um aluno e escolher outra turma, o sistema atualiza simultaneamente a turma ativa da matrícula e a série exibida em **Estudantes cadastrados**. Após salvar, as consultas de alunos, matrículas, Vendas, Anotações, Dashboard e históricos individuais são atualizadas automaticamente, sem exigir sair e entrar novamente.

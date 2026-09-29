@@ -148,3 +148,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Carregar a turma ativa atual ao abrir o formulário.
 - [x] Atualizar a matrícula ativa ao salvar outra turma, preservando o número MAT e históricos.
 - [x] Validar TypeScript, 34 testes, build e diff.
+
+
+## Sincronização após edição de matrícula — 29/09/2026
+
+- [x] Atualizar a série exibida em Estudantes cadastrados com a turma escolhida.
+- [x] Atualizar a matrícula ativa no backend dentro da mesma transação dos dados do aluno.
+- [x] Invalidar alunos, matrículas, dashboard, vendas, anotações e históricos individuais após salvar.
+- [x] Validar TypeScript, 34 testes, build e diff.
