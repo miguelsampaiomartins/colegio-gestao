@@ -137,3 +137,8 @@ O sistema agora utiliza somente **nome de usuário e senha**. O login Google e o
 ### Cadastro integrado de aluno e matrícula
 
 Na aba **Alunos e matrículas**, o botão **Novo aluno + matrícula** abre um único formulário. Além dos dados do aluno e do responsável, informe o ano letivo, a turma e o turno da primeira matrícula. Ao salvar, o sistema grava aluno, telefones e matrícula em uma única transação: se qualquer etapa falhar, nenhum cadastro parcial fica salvo. O número `MAT-00000000` é gerado automaticamente e aparece na confirmação. O botão **Nova matrícula** continua disponível para vincular uma matrícula adicional a um aluno já cadastrado.
+
+
+### Turmas escolares e contagem de alunos
+
+O fluxo visível agora possui apenas o botão **Nova matrícula**. Ele abre o cadastro integrado de aluno e primeira matrícula. A turma é escolhida em uma lista padronizada com **Creche I–III, Pré I–II, 1º ao 9º ano do Ensino Fundamental e 1º ao 3º ano do Ensino Médio**. A tela também exibe a quantidade de matrículas ativas em cada turma; a contagem é atualizada após uma nova matrícula ser salva.

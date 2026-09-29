@@ -122,3 +122,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Mostrar confirmação com o número automático da matrícula.
 - [x] Manter Nova matrícula para alunos já cadastrados.
 - [x] Validar TypeScript, 34 testes e build de produção.
+
+
+## Turmas padronizadas e botão único — 29/09/2026
+
+- [x] Remover os atalhos separados e deixar somente Nova matrícula na interface.
+- [x] Fazer Nova matrícula abrir o cadastro integrado de novo aluno e matrícula.
+- [x] Padronizar turmas de Creche I até o 3º ano do Ensino Médio.
+- [x] Exibir contagem de matrículas ativas por turma.
+- [x] Validar TypeScript, 34 testes, build e responsividade desktop/mobile.
