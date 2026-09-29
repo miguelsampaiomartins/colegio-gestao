@@ -136,7 +136,7 @@ export const appRouter = router({
     students: permissionProcedure("students").query(() => listStudents()),
     addStudent: permissionProcedure("students").input(studentInput).mutation(({ input }) => createStudent(input)),
     addStudentWithEnrollment: permissionProcedure("students").input(studentWithEnrollmentInput).mutation(({ input }) => createStudentWithEnrollment(input)),
-    updateStudent: permissionProcedure("students").input(studentInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => updateStudent(input)),
+    updateStudent: permissionProcedure("students").input(studentInput.extend({ id: z.number().int().positive(), className: z.string().trim().min(1).max(80).optional() })).mutation(({ input }) => updateStudent(input)),
     enrollments: permissionProcedure("students").query(() => listEnrollments()),
     addEnrollment: permissionProcedure("students")
       .input(z.object({ studentId: z.number().int().positive(), schoolYear: z.string().min(4), className: z.string().min(1), shift: z.enum(["morning", "afternoon", "fulltime"]) }))

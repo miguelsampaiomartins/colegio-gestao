@@ -147,3 +147,8 @@ O fluxo visível agora possui apenas o botão **Nova matrícula**. Ele abre o ca
 ### Edição de alunos matriculados
 
 Na lista de alunos, clique em **Ver cadastro** e depois em **Editar**. É possível atualizar nome, turma/série, nascimento, CPFs, responsável, e-mail, endereço e telefones. A matrícula, o número MAT, as vendas, os recibos e o histórico de infrações continuam preservados; somente os dados cadastrais do aluno são atualizados.
+
+
+### Turma na edição do aluno
+
+No formulário **Editar aluno matriculado**, o campo **Turma matriculada** agora é um seletor. Ele lista somente as turmas padronizadas existentes no sistema. Ao salvar, a matrícula ativa do aluno é transferida para a turma escolhida; o número da matrícula e os históricos permanecem os mesmos.

@@ -140,3 +140,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Criar edição protegida dos dados de alunos já matriculados.
 - [x] Atualizar telefones de forma transacional sem apagar matrícula ou histórico.
 - [x] Validar TypeScript, 34 testes e build de produção.
+
+
+## Turma existente na edição — 29/09/2026
+
+- [x] Trocar o campo livre da edição por seletor das turmas padronizadas.
+- [x] Carregar a turma ativa atual ao abrir o formulário.
+- [x] Atualizar a matrícula ativa ao salvar outra turma, preservando o número MAT e históricos.
+- [x] Validar TypeScript, 34 testes, build e diff.

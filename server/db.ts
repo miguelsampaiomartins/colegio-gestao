@@ -137,15 +137,16 @@ export async function createStudentWithEnrollment(input: Omit<typeof students.$i
   }
 }
 
-export async function updateStudent(input: { id: number; name: string; grade: string; birthDate?: string; cpf?: string | null; guardianName: string; guardianCpf?: string | null; guardianEmail?: string | null; address?: string | null; phones: string[] }) {
+export async function updateStudent(input: { id: number; name: string; grade: string; className?: string; birthDate?: string; cpf?: string | null; guardianName: string; guardianCpf?: string | null; guardianEmail?: string | null; address?: string | null; phones: string[] }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  const { id, phones, ...student } = input;
+  const { id, phones, className, ...student } = input;
   try {
     return await db.transaction(async tx => {
       await tx.update(students).set({ ...student, guardianPhone: phones[0] ?? null }).where(eq(students.id, id));
       await tx.delete(studentPhones).where(eq(studentPhones.studentId, id));
       await tx.insert(studentPhones).values(phones.map((number, position) => ({ studentId: id, number, position })));
+      if (className) await tx.update(enrollments).set({ className }).where(and(eq(enrollments.studentId, id), eq(enrollments.status, "active")));
       const [updated] = await tx.select().from(students).where(eq(students.id, id)).limit(1);
       if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Aluno não encontrado." });
       return { ...updated, phones };
