@@ -162,3 +162,8 @@ Ao editar um aluno e escolher outra turma, o sistema atualiza simultaneamente a 
 ### Busca de infrações e descrição opcional
 
 Na **Agenda de infrações**, o campo de busca aceita nome do aluno, turma/série ou descrição. Ao registrar uma ocorrência, a descrição agora é opcional; basta selecionar o aluno, a data e o tipo. Registros sem texto aparecem como **Sem descrição**.
+
+
+### Pesquisa de aluno ao registrar infração
+
+No formulário **Nova infração**, o campo de aluno possui uma pesquisa por nome ou turma. Digite parte do nome ou da série/turma, confira a lista filtrada e selecione o aluno correto antes de registrar. A descrição permanece opcional e aparece com o texto **Opcional**.

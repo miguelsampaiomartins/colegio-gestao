@@ -164,3 +164,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Remover a obrigatoriedade da descrição no formulário e na validação tRPC.
 - [x] Exibir “Sem descrição” nos registros sem texto.
 - [x] Validar TypeScript, 34 testes, build e diff.
+
+
+## Pesquisa no registro de infração — 29/09/2026
+
+- [x] Adicionar campo de pesquisa por nome do aluno ou turma no formulário.
+- [x] Mostrar somente alunos compatíveis na seleção filtrada.
+- [x] Trocar “Pode deixar em branco” por “Opcional” na descrição.
+- [x] Validar TypeScript, 34 testes, build e diff.
