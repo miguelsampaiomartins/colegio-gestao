@@ -131,3 +131,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Padronizar turmas de Creche I até o 3º ano do Ensino Médio.
 - [x] Exibir contagem de matrículas ativas por turma.
 - [x] Validar TypeScript, 34 testes, build e responsividade desktop/mobile.
+
+
+## Expansão de turmas e edição cadastral — 29/09/2026
+
+- [x] Adicionar seta para expandir e recolher cada turma.
+- [x] Mostrar os alunos matriculados na turma selecionada e abrir seu cadastro ao clicar.
+- [x] Criar edição protegida dos dados de alunos já matriculados.
+- [x] Atualizar telefones de forma transacional sem apagar matrícula ou histórico.
+- [x] Validar TypeScript, 34 testes e build de produção.

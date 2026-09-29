@@ -62,5 +62,6 @@ describe("dados escolares", () => {
     await expect(caller.school.addStudent({ ...valid, cpf: "111.111.111-11" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(caller.school.addStudent({ ...valid, phones: ["+55 (11) 99999-9999", "11999999999"] })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(caller.school.addStudentWithEnrollment({ ...valid, schoolYear: "2026", className: "", shift: "morning" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.school.updateStudent({ ...valid, id: 1, cpf: "111.111.111-11" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

@@ -137,6 +137,26 @@ export async function createStudentWithEnrollment(input: Omit<typeof students.$i
   }
 }
 
+export async function updateStudent(input: { id: number; name: string; grade: string; birthDate?: string; cpf?: string | null; guardianName: string; guardianCpf?: string | null; guardianEmail?: string | null; address?: string | null; phones: string[] }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const { id, phones, ...student } = input;
+  try {
+    return await db.transaction(async tx => {
+      await tx.update(students).set({ ...student, guardianPhone: phones[0] ?? null }).where(eq(students.id, id));
+      await tx.delete(studentPhones).where(eq(studentPhones.studentId, id));
+      await tx.insert(studentPhones).values(phones.map((number, position) => ({ studentId: id, number, position })));
+      const [updated] = await tx.select().from(students).where(eq(students.id, id)).limit(1);
+      if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Aluno não encontrado." });
+      return { ...updated, phones };
+    });
+  } catch (error) {
+    const dbError = error as { code?: string; cause?: { code?: string } };
+    if (dbError.code === "ER_DUP_ENTRY" || dbError.cause?.code === "ER_DUP_ENTRY") throw new TRPCError({ code: "CONFLICT", message: "Este CPF de aluno já está cadastrado." });
+    throw error;
+  }
+}
+
 export async function listEnrollments() {
   const db = await getDb();
   if (!db) return [];

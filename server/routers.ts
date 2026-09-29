@@ -16,6 +16,7 @@ import {
   createSale,
   createStudent,
   createStudentWithEnrollment,
+  updateStudent,
   createInventoryCategory,
   deleteInventoryProduct,
   getSchoolProfile,
@@ -135,6 +136,7 @@ export const appRouter = router({
     students: permissionProcedure("students").query(() => listStudents()),
     addStudent: permissionProcedure("students").input(studentInput).mutation(({ input }) => createStudent(input)),
     addStudentWithEnrollment: permissionProcedure("students").input(studentWithEnrollmentInput).mutation(({ input }) => createStudentWithEnrollment(input)),
+    updateStudent: permissionProcedure("students").input(studentInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => updateStudent(input)),
     enrollments: permissionProcedure("students").query(() => listEnrollments()),
     addEnrollment: permissionProcedure("students")
       .input(z.object({ studentId: z.number().int().positive(), schoolYear: z.string().min(4), className: z.string().min(1), shift: z.enum(["morning", "afternoon", "fulltime"]) }))

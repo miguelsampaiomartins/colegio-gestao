@@ -142,3 +142,8 @@ Na aba **Alunos e matrículas**, o botão **Novo aluno + matrícula** abre um ú
 ### Turmas escolares e contagem de alunos
 
 O fluxo visível agora possui apenas o botão **Nova matrícula**. Ele abre o cadastro integrado de aluno e primeira matrícula. A turma é escolhida em uma lista padronizada com **Creche I–III, Pré I–II, 1º ao 9º ano do Ensino Fundamental e 1º ao 3º ano do Ensino Médio**. A tela também exibe a quantidade de matrículas ativas em cada turma; a contagem é atualizada após uma nova matrícula ser salva.
+
+
+### Edição de alunos matriculados
+
+Na lista de alunos, clique em **Ver cadastro** e depois em **Editar**. É possível atualizar nome, turma/série, nascimento, CPFs, responsável, e-mail, endereço e telefones. A matrícula, o número MAT, as vendas, os recibos e o histórico de infrações continuam preservados; somente os dados cadastrais do aluno são atualizados.
