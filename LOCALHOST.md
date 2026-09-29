@@ -157,3 +157,8 @@ No formulário **Editar aluno matriculado**, o campo **Turma matriculada** agora
 ### Sincronização após editar matrícula
 
 Ao editar um aluno e escolher outra turma, o sistema atualiza simultaneamente a turma ativa da matrícula e a série exibida em **Estudantes cadastrados**. Após salvar, as consultas de alunos, matrículas, Vendas, Anotações, Dashboard e históricos individuais são atualizadas automaticamente, sem exigir sair e entrar novamente.
+
+
+### Busca de infrações e descrição opcional
+
+Na **Agenda de infrações**, o campo de busca aceita nome do aluno, turma/série ou descrição. Ao registrar uma ocorrência, a descrição agora é opcional; basta selecionar o aluno, a data e o tipo. Registros sem texto aparecem como **Sem descrição**.

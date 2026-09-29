@@ -156,3 +156,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Atualizar a matrícula ativa no backend dentro da mesma transação dos dados do aluno.
 - [x] Invalidar alunos, matrículas, dashboard, vendas, anotações e históricos individuais após salvar.
 - [x] Validar TypeScript, 34 testes, build e diff.
+
+
+## Busca e descrição opcional nas infrações — 29/09/2026
+
+- [x] Permitir pesquisa da agenda por nome do aluno, turma/série ou descrição.
+- [x] Remover a obrigatoriedade da descrição no formulário e na validação tRPC.
+- [x] Exibir “Sem descrição” nos registros sem texto.
+- [x] Validar TypeScript, 34 testes, build e diff.

@@ -179,7 +179,7 @@ export const appRouter = router({
     incidents: permissionProcedure("incidents").query(() => listIncidents()),
     incidentsByStudent: permissionProcedure("incidents").input(z.object({ studentId: z.number().int().positive() })).query(({ input }) => listIncidentsByStudent(input.studentId)),
     addIncident: permissionProcedure("incidents")
-      .input(z.object({ studentId: z.number().int().positive(), type: z.enum(["absence", "late", "homework", "book", "uniform", "behavior", "other"]), note: z.string().trim().min(3), occurredAt: z.date().optional() }))
+      .input(z.object({ studentId: z.number().int().positive(), type: z.enum(["absence", "late", "homework", "book", "uniform", "behavior", "other"]), note: z.string().trim().max(2000).optional().transform(value => value ?? ""), occurredAt: z.date().optional() }))
       .mutation(({ input }) => createIncident(input)),
     resolveIncident: permissionProcedure("incidents").input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => resolveIncident(input.id)),
   }),
