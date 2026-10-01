@@ -105,6 +105,21 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+*.sql.gz
+*.sql.gcm
+*.dump
+*.backup
+backups/
+
+# Local secrets and credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+credentials.json
+secrets.json
 
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
