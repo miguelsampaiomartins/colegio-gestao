@@ -209,3 +209,14 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Adicionar lixeira e confirmação visual na lista de categorias.
 - [x] Preservar produtos, vendas, movimentações e históricos que usam a categoria.
 - [x] Atualizar documentação e validar TypeScript, 40 testes, build e diff.
+
+## Portal da família e comunicação escolar — 02/10/2026
+
+- [x] Criar tabelas aditivas de contas familiares, vínculos aluno-responsável, notificações e mensagens (`0015_amused_hitman.sql`).
+- [x] Criar login separado por e-mail e senha com scrypt, cookie e audiência JWT próprios, sem acesso ao painel interno.
+- [x] Adicionar portal `/familia` para ver alunos vinculados, infrações, comunicados e histórico de mensagens.
+- [x] Adicionar formulário para o responsável enviar mensagens à secretaria.
+- [x] Adicionar área interna **Famílias e mensagens** para criar acessos, enviar comunicados e acompanhar mensagens recebidas.
+- [x] Disparar notificação automática ao responsável quando uma infração é registrada.
+- [x] Adicionar permissão configurável `communications` e proteger rotas no servidor.
+- [x] Validar migração aplicada, TypeScript, 41 testes, build e capturas desktop/mobile.

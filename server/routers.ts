@@ -40,9 +40,25 @@ import {
 } from "./db";
 import { digitsOnly, isValidCpf, normalizeBrazilianPhone } from "./studentValidation";
 import { actionLabels, listAuditEvents, listBackupRuns, safeRecordAction, safeTargetId } from "./audit";
-import type { PermissionKey } from "../shared/permissions";
+import { permissionKeys, type PermissionKey } from "../shared/permissions";
 import { inventoryCategoryIconKeys } from "../shared/inventory";
 import { createMercadoPagoPix, getMercadoPagoPayment } from "./mercadoPago";
+import {
+  GUARDIAN_COOKIE_NAME,
+  createGuardianAccount,
+  createGuardianMessage,
+  guardianCookieOptions,
+  guardianSessionMaxAge,
+  listGuardianAccounts,
+  listGuardianMessages,
+  listGuardianNotifications,
+  listGuardianStudents,
+  listSchoolMessages,
+  loginGuardian,
+  makeGuardianSession,
+  markGuardianNotificationRead,
+  sendGuardianAnnouncement,
+} from "./guardianAccounts";
 
 const cpfInput = z.string().transform(digitsOnly).refine(isValidCpf, "Informe um CPF válido com 11 dígitos.");
 const phoneInput = z.string().transform(normalizeBrazilianPhone).refine(value => /^[1-9]\d[2-9]\d{7,8}$/.test(value), "Informe um telefone com DDD válido.");
@@ -80,12 +96,17 @@ const permissionProcedure = (permission: PermissionKey) => auditedProcedure.use(
   if (!localModeEnabled() || ctx.localRole === "owner" || ctx.localPermissions?.includes(permission)) return next({ ctx });
   throw new TRPCError({ code: "FORBIDDEN", message: "Sua função não tem permissão para acessar este módulo." });
 });
+const guardianProcedure = publicProcedure.use(({ ctx, next }) => {
+  if (!ctx.guardian) throw new TRPCError({ code: "UNAUTHORIZED", message: "Faça login como responsável para continuar." });
+  return next({ ctx: { ...ctx, guardian: ctx.guardian } });
+});
 
 export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(({ ctx }) => ctx.user ? { ...ctx.user, localRole: ctx.localRole ?? null, localPermissions: ctx.localPermissions ?? [] } : null),
     provider: publicProcedure.query(() => localAuthStatus()),
+    guardianMe: publicProcedure.query(({ ctx }) => ctx.guardian ? { email: ctx.guardian.email, fullName: ctx.guardian.fullName, studentIds: ctx.guardian.studentIds } : null),
     login: publicProcedure.input(z.object({ username: z.string().min(1).max(64), password: z.string().min(1).max(128) }))
       .mutation(async ({ ctx, input }) => {
         const { account, user } = await loginWithPassword(input.username, input.password, ctx.req.socket?.remoteAddress ?? "unknown");
@@ -106,12 +127,20 @@ export const appRouter = router({
       ctx.res.clearCookie(LOCAL_COOKIE_NAME, { ...localCookieOptions(ctx.req), maxAge: -1 });
       return { success: true } as const;
     }),
+    guardianLogin: publicProcedure.input(z.object({ email: z.email().max(320), password: z.string().min(1).max(128) }))
+      .mutation(async ({ ctx, input }) => {
+        const { account, studentIds } = await loginGuardian(input.email, input.password, ctx.req.socket?.remoteAddress ?? "unknown");
+        const token = await makeGuardianSession(account);
+        ctx.res.cookie(GUARDIAN_COOKIE_NAME, token, { ...guardianCookieOptions(ctx.req), maxAge: guardianSessionMaxAge });
+        return { success: true, fullName: account.fullName, studentIds } as const;
+      }),
+    guardianLogout: publicProcedure.mutation(({ ctx }) => { ctx.res.clearCookie(GUARDIAN_COOKIE_NAME, { ...guardianCookieOptions(ctx.req), maxAge: -1 }); return { success: true } as const; }),
   }),
   staff: router({
     list: ownerProcedure.query(() => listStaff()),
     roles: ownerProcedure.query(() => listStaffRoles()),
-    createRole: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(80), permissions: z.array(z.enum(["dashboard", "students", "inventory", "sales", "incidents"])) })).mutation(({ input }) => createStaffRole(input)),
-    updateRole: ownerProcedure.input(z.object({ id: z.number().int().positive(), name: z.string().trim().min(2).max(80), permissions: z.array(z.enum(["dashboard", "students", "inventory", "sales", "incidents"])) })).mutation(({ input }) => updateStaffRole(input)),
+    createRole: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(80), permissions: z.array(z.enum(permissionKeys)) })).mutation(({ input }) => createStaffRole(input)),
+    updateRole: ownerProcedure.input(z.object({ id: z.number().int().positive(), name: z.string().trim().min(2).max(80), permissions: z.array(z.enum(permissionKeys)) })).mutation(({ input }) => updateStaffRole(input)),
     create: ownerProcedure.input(z.object({ firstName: z.string().min(2).max(80), cpfFirstFour: z.string().regex(/^\d{4}$/), fullName: z.string().min(2).max(160), roleId: z.number().int().positive(), password: z.string().min(8).max(128) }))
       .mutation(({ input }) => addStaff(input)),
     setActive: ownerProcedure.input(z.object({ id: z.number().int().positive(), active: z.boolean() }))
@@ -129,6 +158,10 @@ export const appRouter = router({
   school: router({
     dashboard: permissionProcedure("dashboard").query(() => getDashboardStats()),
     profile: protectedProcedure.query(() => getSchoolProfile()),
+    guardianAccounts: permissionProcedure("communications").query(() => listGuardianAccounts()),
+    createGuardianAccount: permissionProcedure("communications").input(z.object({ studentId: z.number().int().positive(), email: z.email().max(320), fullName: z.string().trim().min(2).max(160), password: z.string().min(8).max(128) })).mutation(({ input }) => createGuardianAccount(input)),
+    schoolMessages: permissionProcedure("communications").query(() => listSchoolMessages()),
+    sendGuardianAnnouncement: permissionProcedure("communications").input(z.object({ guardianId: z.number().int().positive(), studentId: z.number().int().positive().optional(), subject: z.string().trim().min(2).max(160), body: z.string().trim().min(2).max(5000) })).mutation(({ input }) => sendGuardianAnnouncement(input)),
     updateProfile: ownerProcedure.input(z.object({
       name: z.string().trim().min(2).max(160),
       cnpj: z.string().trim().max(18).transform(value => value.replace(/\D/g, "")).refine(value => !value || value.length === 14, "Informe um CNPJ com 14 dígitos.").optional(),
@@ -192,6 +225,13 @@ export const appRouter = router({
       .input(z.object({ studentId: z.number().int().positive(), type: z.enum(["absence", "late", "homework", "book", "uniform", "behavior", "other"]), note: z.string().trim().max(2000).optional().transform(value => value ?? ""), occurredAt: z.date().optional() }))
       .mutation(({ input }) => createIncident(input)),
     resolveIncident: permissionProcedure("incidents").input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => resolveIncident(input.id)),
+  }),
+  family: router({
+    students: guardianProcedure.query(({ ctx }) => listGuardianStudents(ctx.guardian.guardianId)),
+    notifications: guardianProcedure.query(({ ctx }) => listGuardianNotifications(ctx.guardian.guardianId)),
+    messages: guardianProcedure.query(({ ctx }) => listGuardianMessages(ctx.guardian.guardianId)),
+    markNotificationRead: guardianProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => markGuardianNotificationRead(input.id, ctx.guardian.guardianId)),
+    sendMessage: guardianProcedure.input(z.object({ studentId: z.number().int().positive(), subject: z.string().trim().min(2).max(160), body: z.string().trim().min(2).max(5000) })).mutation(({ ctx, input }) => createGuardianMessage({ ...input, guardianId: ctx.guardian.guardianId })),
   }),
 });
 

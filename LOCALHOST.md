@@ -107,7 +107,7 @@ Cada matrícula existente ou nova recebe automaticamente um identificador único
 
 Depois de atualizar o clone, pare o servidor e execute `pnpm.cmd db:push` no mesmo banco local. Essa migração cria as funções personalizadas e as categorias iniciais **Uniforme**, **Livro bimestral** e **Outro**; não apaga produtos, vendas ou funcionários existentes.
 
-Em **Equipe e acessos**, o dono pode criar uma função, marcar os módulos permitidos e depois selecionar essa função ao cadastrar cada funcionário. As opções são **Visão geral**, **Alunos e matrículas**, **Estoque**, **Vendas** e **Anotações**. O bloqueio é aplicado no servidor e também na navegação; o dono continua com acesso total. Funcionários antigos sem função vinculada mantêm temporariamente os acessos operacionais anteriores para evitar perda de acesso durante a atualização.
+Em **Equipe e acessos**, o dono pode criar uma função, marcar os módulos permitidos e depois selecionar essa função ao cadastrar cada funcionário. As opções são **Visão geral**, **Alunos e matrículas**, **Estoque**, **Vendas**, **Anotações** e **Famílias e mensagens**. O bloqueio é aplicado no servidor e também na navegação; o dono continua com acesso total. Funcionários antigos sem função vinculada mantêm temporariamente os acessos operacionais anteriores para evitar perda de acesso durante a atualização.
 
 Na aba **Estoque**, o cadastro aceita uma categoria criada pelo dono e um **estoque mínimo**. Quando a quantidade total de um produto fica igual ou abaixo do mínimo, aparece o alerta de reposição. O mínimo pode ser alterado no próprio cartão do produto e as categorias podem ser criadas na seção “Categorias de produtos”.
 
@@ -183,3 +183,21 @@ Na aba **Estoque**, em **Categorias de produtos**, escolha um ícone antes de cr
 ### Exclusão de categorias
 
 Na seção **Categorias de produtos**, o dono pode clicar na lixeira ao lado de uma categoria e confirmar a exclusão. A categoria é arquivada e deixa de aparecer nas novas opções; produtos já cadastrados, vendas, movimentações e históricos permanecem preservados.
+
+
+### Portal da família e comunicação escolar
+
+O sistema agora possui um portal separado para responsáveis, acessível em **`/familia`**.
+
+1. Entre no painel interno com o dono ou com um funcionário cuja função tenha a permissão **Famílias e mensagens**.
+2. Abra **Famílias e mensagens** e, em **Criar acesso familiar**, selecione um aluno ativo.
+3. O e-mail informado precisa ser o mesmo e-mail do responsável cadastrado no aluno. Crie uma senha com pelo menos 8 caracteres e entregue essas credenciais ao responsável por um canal seguro.
+4. O responsável acessa `http://localhost:3000/familia` e entra com e-mail e senha. O portal não dá acesso ao painel administrativo.
+5. Na área interna, a escola pode enviar comunicados relacionados a um aluno ou a todos os alunos vinculados à conta e acompanhar as mensagens recebidas.
+6. No portal, o responsável vê ocorrências registradas, comunicados, histórico de mensagens e pode enviar uma mensagem para a secretaria selecionando o aluno.
+
+As ocorrências novas geram automaticamente uma notificação para todas as contas familiares vinculadas ao aluno. As senhas são armazenadas com **scrypt**, nunca em texto puro; o cookie familiar é separado do cookie da equipe e as rotas verificam o vínculo entre responsável e aluno.
+
+Para liberar o módulo a uma função: entre em **Equipe e acessos**, abra a função desejada, marque **Famílias e mensagens** e salve. O dono sempre possui acesso total.
+
+Se o servidor estiver usando outra porta porque a 3000 já está ocupada, utilize a porta exibida no terminal, por exemplo `http://localhost:3001/familia`.

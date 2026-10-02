@@ -4,6 +4,8 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
   enrollments,
+  guardianNotifications,
+  guardianStudents,
   incidents,
   inventoryCategories,
   inventoryItems,
@@ -515,9 +517,14 @@ export async function listIncidentsByStudent(studentId: number) {
 export async function createIncident(input: typeof incidents.$inferInsert) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  await db.insert(incidents).values(input);
+  const [created] = await db.insert(incidents).values(input);
+  const links = await db.select({ guardianId: guardianStudents.guardianId }).from(guardianStudents).where(eq(guardianStudents.studentId, input.studentId));
+  if (links.length) {
+    const label: Record<string, string> = { absence: "Falta", late: "Atraso", homework: "Tarefa não feita", book: "Livro esquecido", uniform: "Falta de uniforme", behavior: "Comportamento", other: "Ocorrência" };
+    await db.insert(guardianNotifications).values(links.map(link => ({ guardianId: link.guardianId, studentId: input.studentId, kind: "incident" as const, title: `Nova ocorrência: ${label[input.type] ?? "Ocorrência"}`, body: input.note || "Uma nova ocorrência foi registrada pela escola." })));
+  }
   const rows = await listIncidents();
-  return rows[0];
+  return rows.find(row => row.id === created.insertId) ?? rows[0];
 }
 
 export async function resolveIncident(id: number) {

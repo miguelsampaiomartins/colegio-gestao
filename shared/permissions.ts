@@ -1,4 +1,4 @@
-export const permissionKeys = ["dashboard", "students", "inventory", "sales", "incidents"] as const;
+export const permissionKeys = ["dashboard", "students", "inventory", "sales", "incidents", "communications"] as const;
 export type PermissionKey = typeof permissionKeys[number];
 
 export const permissionLabels: Record<PermissionKey, string> = {
@@ -7,6 +7,7 @@ export const permissionLabels: Record<PermissionKey, string> = {
   inventory: "Estoque",
   sales: "Vendas",
   incidents: "Anotações",
+  communications: "Famílias e mensagens",
 };
 
 export const allStaffPermissions = [...permissionKeys] as PermissionKey[];

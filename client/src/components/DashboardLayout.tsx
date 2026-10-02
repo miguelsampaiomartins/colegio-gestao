@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { Archive, ArrowUpRight, CalendarDays, ChevronRight, ClipboardList, DatabaseBackup, GraduationCap, KeyRound, LayoutDashboard, LogIn, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldCheck, ShoppingCart, Sparkles, UsersRound, X } from "lucide-react";
+import { Archive, ArrowUpRight, CalendarDays, ChevronRight, ClipboardList, DatabaseBackup, GraduationCap, KeyRound, LayoutDashboard, LogIn, LogOut, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, ShieldCheck, ShoppingCart, Sparkles, UsersRound, X } from "lucide-react";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import type { PermissionKey } from "@/../../shared/permissions";
 
@@ -18,6 +18,7 @@ const menuItems = [
   { icon: Archive, label: "Estoque", path: "/estoque", permission: "inventory" as PermissionKey },
   { icon: ShoppingCart, label: "Vendas", path: "/vendas", permission: "sales" as PermissionKey },
   { icon: ClipboardList, label: "Anotações", path: "/anotacoes", permission: "incidents" as PermissionKey },
+  { icon: MessagesSquare, label: "Famílias e mensagens", path: "/familias", permission: "communications" as PermissionKey },
 ];
 const SIDEBAR_WIDTH_KEY = "school-sidebar-width";
 const year = new Date().getFullYear();
@@ -29,12 +30,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return Number.isFinite(saved) && saved >= 220 && saved <= 340 ? saved : 268;
   });
   const { loading, user } = useAuth();
+  const [location] = useLocation();
   const provider = trpc.auth.provider.useQuery(undefined, { retry: false });
   const utils = trpc.useUtils();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const login = trpc.auth.login.useMutation({ onSuccess: async () => { setPassword(""); await utils.auth.me.invalidate(); } });
   useEffect(() => localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString()), [sidebarWidth]);
+  if (location === "/familia") return <>{children}</>;
   if (loading) return <DashboardLayoutSkeleton />;
 
   if (!user) {

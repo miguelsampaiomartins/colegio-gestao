@@ -86,6 +86,47 @@ export const studentPhones = mysqlTable("studentPhones", {
   number: varchar("number", { length: 20 }).notNull(),
   position: int("position").default(0).notNull(),
 });
+
+/** Separate family identities; guardians never receive access to the staff panel. */
+export const guardianAccounts = mysqlTable("guardianAccounts", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  fullName: varchar("fullName", { length: 160 }).notNull(),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  active: int("active").default(1).notNull(),
+  sessionVersion: int("sessionVersion").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const guardianStudents = mysqlTable("guardianStudents", {
+  id: int("id").autoincrement().primaryKey(),
+  guardianId: int("guardianId").notNull(),
+  studentId: int("studentId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const guardianNotifications = mysqlTable("guardianNotifications", {
+  id: int("id").autoincrement().primaryKey(),
+  guardianId: int("guardianId").notNull(),
+  studentId: int("studentId"),
+  kind: mysqlEnum("kind", ["incident", "message", "announcement"]).notNull(),
+  title: varchar("title", { length: 160 }).notNull(),
+  body: text("body").notNull(),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const guardianMessages = mysqlTable("guardianMessages", {
+  id: int("id").autoincrement().primaryKey(),
+  guardianId: int("guardianId").notNull(),
+  studentId: int("studentId"),
+  direction: mysqlEnum("direction", ["fromGuardian", "fromSchool"]).notNull(),
+  subject: varchar("subject", { length: 160 }).notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  readAt: timestamp("readAt"),
+});
 export const enrollments = mysqlTable("enrollments", {
   id: int("id").autoincrement().primaryKey(),
   studentId: int("studentId").notNull(),
