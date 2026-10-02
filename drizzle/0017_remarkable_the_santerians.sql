@@ -1,0 +1,1 @@
+ALTER TABLE `guardianAccounts` ADD `phone` varchar(20);

@@ -252,3 +252,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Criar mutação protegida pela permissão Famílias e mensagens.
 - [x] Armazenar a nova senha com scrypt e invalidar sessões antigas.
 - [x] Validar TypeScript, 42 testes, build e diff.
+
+## Pesquisa e edição de contas familiares — 02/10/2026
+
+- [x] Adicionar pesquisa por nome, e-mail, telefone ou aluno vinculado.
+- [x] Permitir editar nome, e-mail e telefone da conta familiar.
+- [x] Permitir informar uma nova senha opcional no formulário de edição.
+- [x] Adicionar telefone ao cadastro e à migração sem alterar contas existentes.
+- [x] Validar TypeScript, 42 testes, build, diff e revisão visual.

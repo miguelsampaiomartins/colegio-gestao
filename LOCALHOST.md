@@ -216,3 +216,7 @@ O formulário **Nova conversa** foi removido da área interna e do portal. O res
 ### Recuperação de senha do responsável
 
 Em **Famílias e mensagens**, na seção **Acessos cadastrados**, clique em **Redefinir senha** ao lado da conta desejada. Informe uma nova senha com pelo menos 8 caracteres e clique em **Salvar**. A senha anterior não é exibida; uma nova senha é criada com hash scrypt e as sessões antigas dessa conta são invalidadas. Entregue a nova senha ao responsável por um canal seguro.
+
+### Pesquisa e edição de contas familiares
+
+Em **Famílias e mensagens**, a seção **Acessos cadastrados** permite pesquisar por nome, e-mail, telefone ou aluno vinculado. Clique em **Editar dados** para alterar nome, e-mail e telefone; também é possível informar uma nova senha opcional no mesmo formulário. A alteração do e-mail precisa ser comunicada ao responsável, pois ele será o novo identificador de login. Ao trocar a senha, as sessões anteriores são encerradas.

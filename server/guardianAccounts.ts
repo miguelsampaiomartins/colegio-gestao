@@ -7,6 +7,7 @@ import type { Request } from "express";
 import { enrollments, guardianAccounts, guardianMessages, guardianNotifications, guardianStudents, students } from "../drizzle/schema";
 import { getDb } from "./db";
 import { hashPassword, verifyPassword, localAuthStatus, localCookieOptions } from "./localAccounts";
+import { normalizeBrazilianPhone } from "./studentValidation";
 
 export const GUARDIAN_COOKIE_NAME = "school_guardian_session";
 const SESSION_LIFETIME_MS = 8 * 60 * 60 * 1000;
@@ -54,6 +55,10 @@ export function normalizeMessageSenderName(senderName?: string | null) {
   return normalized || "Secretaria";
 }
 
+export function normalizeGuardianPhone(phone?: string | null) {
+  return phone?.trim() ? normalizeBrazilianPhone(phone) : null;
+}
+
 export async function authenticateGuardianRequest(req: Request): Promise<GuardianSession | null> {
   if (!localAuthStatus().configured) return null;
   const token = parseCookies(req.headers.cookie ?? "")[GUARDIAN_COOKIE_NAME];
@@ -72,10 +77,11 @@ export async function authenticateGuardianRequest(req: Request): Promise<Guardia
 
 export function guardianCookieOptions(req: Request) { return localCookieOptions(req); }
 
-export async function createGuardianAccount(input: { studentId: number; email: string; fullName: string; password: string }) {
+export async function createGuardianAccount(input: { studentId: number; email: string; fullName: string; phone?: string; password: string }) {
   const db = requireDatabase(await getDb());
   const email = input.email.trim().toLowerCase();
   const fullName = input.fullName.trim();
+  const phone = normalizeGuardianPhone(input.phone);
   const [student] = await db.select({ id: students.id, name: students.name, guardianEmail: students.guardianEmail, guardianName: students.guardianName }).from(students).where(and(eq(students.id, input.studentId), eq(students.status, "active"))).limit(1);
   if (!student) throw new TRPCError({ code: "NOT_FOUND", message: "Aluno ativo não encontrado." });
   if (student.guardianEmail && student.guardianEmail.toLowerCase() !== email) throw new TRPCError({ code: "BAD_REQUEST", message: "O e-mail deve ser o mesmo cadastrado para o responsável deste aluno." });
@@ -86,9 +92,9 @@ export async function createGuardianAccount(input: { studentId: number; email: s
       let guardianId: number;
       if (existing) {
         guardianId = existing.id;
-        await tx.update(guardianAccounts).set({ fullName, passwordHash, active: 1, sessionVersion: existing.sessionVersion + 1, updatedAt: new Date() }).where(eq(guardianAccounts.id, existing.id));
+        await tx.update(guardianAccounts).set({ fullName, phone, passwordHash, active: 1, sessionVersion: existing.sessionVersion + 1, updatedAt: new Date() }).where(eq(guardianAccounts.id, existing.id));
       } else {
-        const [created] = await tx.insert(guardianAccounts).values({ email, fullName, passwordHash });
+        const [created] = await tx.insert(guardianAccounts).values({ email, fullName, phone, passwordHash });
         guardianId = created.insertId;
       }
       const [link] = await tx.select({ id: guardianStudents.id }).from(guardianStudents).where(and(eq(guardianStudents.guardianId, guardianId), eq(guardianStudents.studentId, input.studentId))).limit(1);
@@ -111,9 +117,27 @@ export async function resetGuardianPassword(input: { guardianId: number; newPass
   return { email: account.email, fullName: account.fullName };
 }
 
+export async function updateGuardianAccount(input: { guardianId: number; email: string; fullName: string; phone?: string; newPassword?: string }) {
+  const db = requireDatabase(await getDb());
+  const email = input.email.trim().toLowerCase();
+  const fullName = input.fullName.trim();
+  const phone = normalizeGuardianPhone(input.phone);
+  const [account] = await db.select({ id: guardianAccounts.id, sessionVersion: guardianAccounts.sessionVersion }).from(guardianAccounts).where(eq(guardianAccounts.id, input.guardianId)).limit(1);
+  if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Conta familiar não encontrada." });
+  const passwordHash = input.newPassword?.trim() ? await hashPassword(input.newPassword) : undefined;
+  try {
+    await db.update(guardianAccounts).set({ email, fullName, phone, ...(passwordHash ? { passwordHash, sessionVersion: account.sessionVersion + 1 } : {}), updatedAt: new Date() }).where(eq(guardianAccounts.id, input.guardianId));
+  } catch (error) {
+    const dbError = error as { code?: string; cause?: { code?: string } };
+    if (dbError.code === "ER_DUP_ENTRY" || dbError.cause?.code === "ER_DUP_ENTRY") throw new TRPCError({ code: "CONFLICT", message: "Já existe uma conta familiar com este e-mail." });
+    throw error;
+  }
+  return { email, fullName, phone: phone ?? "" };
+}
+
 export async function listGuardianAccounts() {
   const db = requireDatabase(await getDb());
-  return db.select({ id: guardianAccounts.id, email: guardianAccounts.email, fullName: guardianAccounts.fullName, active: guardianAccounts.active, createdAt: guardianAccounts.createdAt, studentId: guardianStudents.studentId, studentName: students.name })
+  return db.select({ id: guardianAccounts.id, email: guardianAccounts.email, fullName: guardianAccounts.fullName, phone: guardianAccounts.phone, active: guardianAccounts.active, createdAt: guardianAccounts.createdAt, studentId: guardianStudents.studentId, studentName: students.name })
     .from(guardianAccounts).leftJoin(guardianStudents, eq(guardianAccounts.id, guardianStudents.guardianId)).leftJoin(students, eq(guardianStudents.studentId, students.id)).orderBy(guardianAccounts.fullName, students.name);
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { jwtVerify } from "jose";
-import { GUARDIAN_COOKIE_NAME, guardianSessionMaxAge, makeGuardianSession, normalizeMessageSenderName } from "./guardianAccounts";
+import { GUARDIAN_COOKIE_NAME, guardianSessionMaxAge, makeGuardianSession, normalizeGuardianPhone, normalizeMessageSenderName } from "./guardianAccounts";
 
 describe("sessão do portal familiar", () => {
   it("usa cookie e audiência separados do painel interno", async () => {
@@ -23,5 +23,12 @@ describe("identificação de mensagens escolares", () => {
     expect(normalizeMessageSenderName(null)).toBe("Secretaria");
     expect(normalizeMessageSenderName("   ")).toBe("Secretaria");
     expect(normalizeMessageSenderName("x".repeat(200))).toHaveLength(160);
+  });
+});
+
+describe("dados da conta familiar", () => {
+  it("normaliza telefone com DDD e aceita campo vazio", () => {
+    expect(normalizeGuardianPhone("+55 (11) 98765-4321")).toBe("11987654321");
+    expect(normalizeGuardianPhone("   ")).toBeNull();
   });
 });

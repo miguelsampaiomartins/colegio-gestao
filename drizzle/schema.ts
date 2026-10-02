@@ -92,6 +92,7 @@ export const guardianAccounts = mysqlTable("guardianAccounts", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull().unique(),
   fullName: varchar("fullName", { length: 160 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
   active: int("active").default(1).notNull(),
   sessionVersion: int("sessionVersion").default(1).notNull(),

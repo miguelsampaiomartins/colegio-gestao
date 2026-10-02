@@ -58,6 +58,7 @@ import {
   makeGuardianSession,
   markGuardianNotificationRead,
   resetGuardianPassword,
+  updateGuardianAccount,
   sendGuardianAnnouncement,
 } from "./guardianAccounts";
 
@@ -160,8 +161,9 @@ export const appRouter = router({
     dashboard: permissionProcedure("dashboard").query(() => getDashboardStats()),
     profile: protectedProcedure.query(() => getSchoolProfile()),
     guardianAccounts: permissionProcedure("communications").query(() => listGuardianAccounts()),
-    createGuardianAccount: permissionProcedure("communications").input(z.object({ studentId: z.number().int().positive(), email: z.email().max(320), fullName: z.string().trim().min(2).max(160), password: z.string().min(8).max(128) })).mutation(({ input }) => createGuardianAccount(input)),
+    createGuardianAccount: permissionProcedure("communications").input(z.object({ studentId: z.number().int().positive(), email: z.email().max(320), fullName: z.string().trim().min(2).max(160), phone: z.string().max(40).optional(), password: z.string().min(8).max(128) })).mutation(({ input }) => createGuardianAccount(input)),
     resetGuardianPassword: permissionProcedure("communications").input(z.object({ guardianId: z.number().int().positive(), newPassword: z.string().min(8).max(128) })).mutation(({ input }) => resetGuardianPassword(input)),
+    updateGuardianAccount: permissionProcedure("communications").input(z.object({ guardianId: z.number().int().positive(), email: z.email().max(320), fullName: z.string().trim().min(2).max(160), phone: z.string().max(40).optional(), newPassword: z.string().min(8).max(128).optional() })).mutation(({ input }) => updateGuardianAccount(input)),
     schoolMessages: permissionProcedure("communications").query(() => listSchoolMessages()),
     sendGuardianAnnouncement: permissionProcedure("communications").input(z.object({ guardianId: z.number().int().positive(), studentId: z.number().int().positive().optional(), subject: z.string().trim().min(2).max(160), body: z.string().trim().min(2).max(5000) })).mutation(({ ctx, input }) => sendGuardianAnnouncement({ ...input, senderName: ctx.user.name ?? "Secretaria" })),
     updateProfile: ownerProcedure.input(z.object({
