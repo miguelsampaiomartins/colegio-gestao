@@ -40,6 +40,7 @@ import {
 import { digitsOnly, isValidCpf, normalizeBrazilianPhone } from "./studentValidation";
 import { actionLabels, listAuditEvents, listBackupRuns, safeRecordAction, safeTargetId } from "./audit";
 import type { PermissionKey } from "../shared/permissions";
+import { createMercadoPagoPix, getMercadoPagoPayment } from "./mercadoPago";
 
 const cpfInput = z.string().transform(digitsOnly).refine(isValidCpf, "Informe um CPF válido com 11 dígitos.");
 const phoneInput = z.string().transform(normalizeBrazilianPhone).refine(value => /^[1-9]\d[2-9]\d{7,8}$/.test(value), "Informe um telefone com DDD válido.");
@@ -176,6 +177,12 @@ export const appRouter = router({
     cancelSale: permissionProcedure("sales")
       .input(z.object({ saleId: z.number().int().positive() }))
       .mutation(({ input }) => cancelSale(input.saleId)),
+    createMercadoPagoPix: permissionProcedure("sales")
+      .input(z.object({ amountCents: z.number().int().positive().max(100000000), description: z.string().trim().min(3).max(120), payerEmail: z.email().optional() }))
+      .mutation(({ input }) => createMercadoPagoPix(input)),
+    getMercadoPagoPayment: permissionProcedure("sales")
+      .input(z.object({ paymentId: z.string().regex(/^\d+$/).max(40) }))
+      .query(({ input }) => getMercadoPagoPayment(input.paymentId)),
     incidents: permissionProcedure("incidents").query(() => listIncidents()),
     incidentsByStudent: permissionProcedure("incidents").input(z.object({ studentId: z.number().int().positive() })).query(({ input }) => listIncidentsByStudent(input.studentId)),
     addIncident: permissionProcedure("incidents")

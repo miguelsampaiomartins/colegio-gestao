@@ -172,3 +172,14 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Mostrar somente alunos compatíveis na seleção filtrada.
 - [x] Trocar “Pode deixar em branco” por “Opcional” na descrição.
 - [x] Validar TypeScript, 34 testes, build e diff.
+
+
+## Mercado Pago Pix sandbox — 02/10/2026
+
+- [x] Configurar credenciais de teste protegidas, sem versionar tokens.
+- [x] Validar Access Token no endpoint leve de identidade do Mercado Pago.
+- [x] Criar cliente server-side para gerar Pix sandbox e consultar status.
+- [x] Adicionar rotas tRPC protegidas pela permissão de vendas.
+- [x] Adicionar painel na aba Vendas com QR Code, copia e cola e atualização de status.
+- [x] Manter a venda e o estoque inalterados ao gerar apenas a cobrança de teste.
+- [x] Validar TypeScript, 38 testes, build e diff.
