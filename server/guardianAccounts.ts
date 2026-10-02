@@ -102,6 +102,15 @@ export async function createGuardianAccount(input: { studentId: number; email: s
   }
 }
 
+export async function resetGuardianPassword(input: { guardianId: number; newPassword: string }) {
+  const db = requireDatabase(await getDb());
+  const passwordHash = await hashPassword(input.newPassword);
+  const [account] = await db.select({ id: guardianAccounts.id, email: guardianAccounts.email, fullName: guardianAccounts.fullName, sessionVersion: guardianAccounts.sessionVersion }).from(guardianAccounts).where(eq(guardianAccounts.id, input.guardianId)).limit(1);
+  if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Conta familiar não encontrada." });
+  await db.update(guardianAccounts).set({ passwordHash, sessionVersion: account.sessionVersion + 1, active: 1, updatedAt: new Date() }).where(eq(guardianAccounts.id, input.guardianId));
+  return { email: account.email, fullName: account.fullName };
+}
+
 export async function listGuardianAccounts() {
   const db = requireDatabase(await getDb());
   return db.select({ id: guardianAccounts.id, email: guardianAccounts.email, fullName: guardianAccounts.fullName, active: guardianAccounts.active, createdAt: guardianAccounts.createdAt, studentId: guardianStudents.studentId, studentName: students.name })

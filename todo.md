@@ -245,3 +245,10 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Mostrar os acessos familiares já cadastrados.
 - [x] Manter a remoção de **Nova conversa** e o chat iniciado pelo responsável.
 - [x] Validar TypeScript, 42 testes, build e diff.
+
+## Recuperação de senha de responsáveis — 02/10/2026
+
+- [x] Adicionar a ação Redefinir senha em cada acesso familiar cadastrado.
+- [x] Criar mutação protegida pela permissão Famílias e mensagens.
+- [x] Armazenar a nova senha com scrypt e invalidar sessões antigas.
+- [x] Validar TypeScript, 42 testes, build e diff.

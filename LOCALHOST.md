@@ -212,3 +212,7 @@ As telas consultam novas mensagens automaticamente a cada poucos segundos, sem e
 ### Chat somente por conversas iniciadas pelo responsável
 
 O formulário **Nova conversa** foi removido da área interna e do portal. O responsável inicia o contato pelo portal da família; a secretaria acompanha os chats existentes e responde no mesmo histórico. Cada conversa mostra o nome e o e-mail do responsável, o aluno relacionado e o assunto. Cada mensagem identifica se foi enviada pelo responsável ou pela secretaria; mensagens novas da escola salvam o nome da secretaria que estava autenticada no momento do envio.
+
+### Recuperação de senha do responsável
+
+Em **Famílias e mensagens**, na seção **Acessos cadastrados**, clique em **Redefinir senha** ao lado da conta desejada. Informe uma nova senha com pelo menos 8 caracteres e clique em **Salvar**. A senha anterior não é exibida; uma nova senha é criada com hash scrypt e as sessões antigas dessa conta são invalidadas. Entregue a nova senha ao responsável por um canal seguro.

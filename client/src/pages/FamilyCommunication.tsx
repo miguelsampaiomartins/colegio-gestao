@@ -51,6 +51,8 @@ export default function FamilyCommunication() {
   const accounts = trpc.school.guardianAccounts.useQuery(undefined, { enabled: Boolean(allowed) });
   const messages = trpc.school.schoolMessages.useQuery(undefined, { enabled: Boolean(allowed), refetchInterval: 3000 });
   const [access, setAccess] = useState(emptyAccess);
+  const [resetTarget, setResetTarget] = useState<number | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
   const [chat, setChat] = useState({ guardianId: "", studentId: "", subject: "", body: "" });
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const createAccess = trpc.school.createGuardianAccount.useMutation({
@@ -58,6 +60,15 @@ export default function FamilyCommunication() {
       setAccess(emptyAccess);
       await utils.school.guardianAccounts.invalidate();
       toast.success(`Acesso criado para ${result.studentName}.`);
+    },
+    onError: error => toast.error(error.message),
+  });
+  const resetAccessPassword = trpc.school.resetGuardianPassword.useMutation({
+    onSuccess: async result => {
+      setResetTarget(null);
+      setResetPassword("");
+      await utils.school.guardianAccounts.invalidate();
+      toast.success(`Senha de ${result.fullName} redefinida.`);
     },
     onError: error => toast.error(error.message),
   });
@@ -114,7 +125,7 @@ export default function FamilyCommunication() {
         <label className="space-y-1.5 sm:col-span-2"><Label htmlFor="guardian-password">Senha inicial</Label><Input id="guardian-password" type="password" required minLength={8} maxLength={128} placeholder="Mínimo de 8 caracteres" value={access.password} onChange={event => setAccess(current => ({ ...current, password: event.target.value }))} /><span className="text-[11px] text-[#788d88]">Use o mesmo e-mail cadastrado no responsável do aluno.</span></label>
         <Button disabled={createAccess.isPending || !access.studentId} className="bg-[#14877e] text-white hover:bg-[#0f6e65] sm:col-span-2"><UserPlus className="mr-2 h-4 w-4" />{createAccess.isPending ? "Criando acesso..." : "Criar acesso familiar"}</Button>
       </form></CardContent></Card>
-      <Card className="border-[#e6eae9] bg-white shadow-[0_12px_32px_rgba(26,54,73,.055)]"><CardContent className="p-5 sm:p-7"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[#edf1f9] text-[#5470aa]"><UsersRound className="h-5 w-5" /></div><div><h3 className="font-bold text-[#12233f]">Acessos cadastrados</h3><p className="text-xs text-[#647b79]">Contas disponíveis no portal familiar.</p></div></div><div className="mt-5 space-y-2">{(accounts.data ?? []).slice(0, 6).map(account => <div key={`${account.id}-${account.studentId ?? "all"}`} className="rounded-xl border border-[#e8edeb] p-3"><p className="text-sm font-semibold text-[#12233f]">{account.fullName}</p><p className="mt-1 text-xs text-[#647b79]">{account.email}</p><p className="mt-1 text-[11px] text-[#81948f]">{account.studentName ?? "Aluno não vinculado"}</p></div>)}{!accounts.isLoading && !(accounts.data ?? []).length && <p className="text-xs text-[#647b79]">Nenhum acesso familiar cadastrado.</p>}</div></CardContent></Card>
+      <Card className="border-[#e6eae9] bg-white shadow-[0_12px_32px_rgba(26,54,73,.055)]"><CardContent className="p-5 sm:p-7"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[#edf1f9] text-[#5470aa]"><UsersRound className="h-5 w-5" /></div><div><h3 className="font-bold text-[#12233f]">Acessos cadastrados</h3><p className="text-xs text-[#647b79]">Contas disponíveis no portal familiar.</p></div></div><div className="mt-5 space-y-2">{(accounts.data ?? []).slice(0, 6).map(account => <div key={`${account.id}-${account.studentId ?? "all"}`} className="rounded-xl border border-[#e8edeb] p-3"><div className="flex items-start justify-between gap-2"><div><p className="text-sm font-semibold text-[#12233f]">{account.fullName}</p><p className="mt-1 text-xs text-[#647b79]">{account.email}</p><p className="mt-1 text-[11px] text-[#81948f]">{account.studentName ?? "Aluno não vinculado"}</p></div><Button type="button" variant="outline" className="h-8 shrink-0 px-2 text-[11px] text-[#5470aa]" onClick={() => { setResetTarget(resetTarget === account.id ? null : account.id); setResetPassword(""); }}>{resetTarget === account.id ? "Cancelar" : "Redefinir senha"}</Button></div>{resetTarget === account.id && <form className="mt-3 flex gap-2" onSubmit={event => { event.preventDefault(); resetAccessPassword.mutate({ guardianId: account.id, newPassword: resetPassword }); }}><Input type="password" required minLength={8} maxLength={128} aria-label={`Nova senha de ${account.fullName}`} placeholder="Nova senha (mín. 8)" value={resetPassword} onChange={event => setResetPassword(event.target.value)} /><Button type="submit" disabled={resetAccessPassword.isPending || resetPassword.length < 8} className="shrink-0 bg-[#5470aa] text-white hover:bg-[#405b91]">{resetAccessPassword.isPending ? "Salvando..." : "Salvar"}</Button></form>}</div>)}{!accounts.isLoading && !(accounts.data ?? []).length && <p className="text-xs text-[#647b79]">Nenhum acesso familiar cadastrado.</p>}</div></CardContent></Card>
     </div>
     <Card className="border-[#e6eae9] bg-white shadow-[0_12px_32px_rgba(26,54,73,.055)]"><CardContent className="p-5 sm:p-7"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[#e7f4f1] text-[#14877e]"><MessageCircle className="h-5 w-5" /></div><div><h3 className="font-bold text-[#12233f]">Como o chat funciona</h3><p className="text-xs text-[#647b79]">O responsável inicia a conversa no portal; a secretaria responde pelo chat. O histórico identifica os dois lados.</p></div></div></CardContent></Card>
   </div>;
