@@ -177,4 +177,4 @@ As credenciais ficam nas variáveis protegidas `MERCADOPAGO_ACCESS_TOKEN` e `VIT
 
 ### Ícones de categorias de produtos
 
-Na aba **Estoque**, em **Categorias de produtos**, escolha um ícone antes de criar a categoria: **Blusa**, **Caixa** ou **Livro**. O ícone aparece ao lado do nome de cada produto no estoque. Categorias antigas recebem automaticamente o ícone de caixa como padrão, enquanto as categorias padrão ficam associadas a blusa, livro e caixa. Após atualizar o código, pare o servidor e execute `pnpm.cmd db:push` no banco local para aplicar a coluna nova; nenhum produto, categoria ou histórico é apagado.
+Na aba **Estoque**, em **Categorias de produtos**, escolha um ícone antes de criar a categoria; no seletor aparecem somente as imagens: **Blusa**, **Outros** ou **Livro**. O ícone aparece ao lado do nome de cada produto no estoque. Categorias antigas recebem automaticamente o ícone de outros como padrão, enquanto as categorias padrão ficam associadas a blusa, livro e outros. Após atualizar o código, pare o servidor e execute `pnpm.cmd db:push` no banco local para aplicar a coluna nova; nenhum produto, categoria ou histórico é apagado.

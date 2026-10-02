@@ -188,8 +188,16 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 ## Ícones de categorias de estoque — 02/10/2026
 
 - [x] Adicionar coluna aditiva `icon` em `inventoryCategories` com fallback `package`.
-- [x] Associar as categorias padrão aos ícones blusa, livro e caixa sem alterar produtos existentes.
-- [x] Permitir ao dono escolher Blusa, Caixa ou Livro ao criar uma categoria.
+- [x] Associar as categorias padrão aos ícones blusa, livro e outros sem alterar produtos existentes.
+- [x] Permitir ao dono escolher Blusa, Outros ou Livro ao criar uma categoria.
 - [x] Exibir o ícone escolhido ao lado de cada produto cadastrado no estoque.
 - [x] Atualizar contratos tRPC, documentação e testes de fallback.
+- [x] Validar TypeScript, 40 testes, build e diff.
+
+
+## Ajuste visual dos ícones — 02/10/2026
+
+- [x] Renomear a descrição acessível do ícone package para Outros.
+- [x] Remover os nomes visíveis do seletor e deixar somente as três imagens.
+- [x] Manter `aria-label` e `title` para acessibilidade sem poluir a interface.
 - [x] Validar TypeScript, 40 testes, build e diff.
