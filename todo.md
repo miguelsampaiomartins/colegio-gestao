@@ -220,3 +220,12 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Disparar notificação automática ao responsável quando uma infração é registrada.
 - [x] Adicionar permissão configurável `communications` e proteger rotas no servidor.
 - [x] Validar migração aplicada, TypeScript, 41 testes, build e capturas desktop/mobile.
+
+## Chat ao vivo escola-família — 02/10/2026
+
+- [x] Reutilizar o histórico existente e agrupar mensagens por responsável, aluno e assunto em conversas.
+- [x] Substituir a área interna de comunicados por caixa de entrada, lista de chats, abertura de conversa e respostas.
+- [x] Substituir o formulário do responsável por lista de conversas, respostas e nova conversa.
+- [x] Atualizar automaticamente novas mensagens a cada 3 segundos nos dois lados.
+- [x] Manter as permissões, vínculos de aluno e sessões separadas entre equipe e responsáveis.
+- [x] Validar TypeScript, 41 testes, build e revisão visual das telas.

@@ -193,11 +193,18 @@ O sistema agora possui um portal separado para responsáveis, acessível em **`/
 2. Abra **Famílias e mensagens** e, em **Criar acesso familiar**, selecione um aluno ativo.
 3. O e-mail informado precisa ser o mesmo e-mail do responsável cadastrado no aluno. Crie uma senha com pelo menos 8 caracteres e entregue essas credenciais ao responsável por um canal seguro.
 4. O responsável acessa `http://localhost:3000/familia` e entra com e-mail e senha. O portal não dá acesso ao painel administrativo.
-5. Na área interna, a escola pode enviar comunicados relacionados a um aluno ou a todos os alunos vinculados à conta e acompanhar as mensagens recebidas.
-6. No portal, o responsável vê ocorrências registradas, comunicados, histórico de mensagens e pode enviar uma mensagem para a secretaria selecionando o aluno.
+5. Na área interna, a escola pode abrir conversas relacionadas a um aluno ou a todos os alunos vinculados à conta e responder pelo chat.
+6. No portal, o responsável vê ocorrências registradas, comunicados, histórico de mensagens e conversa com a secretaria em chats separados por aluno e assunto.
 
 As ocorrências novas geram automaticamente uma notificação para todas as contas familiares vinculadas ao aluno. As senhas são armazenadas com **scrypt**, nunca em texto puro; o cookie familiar é separado do cookie da equipe e as rotas verificam o vínculo entre responsável e aluno.
 
 Para liberar o módulo a uma função: entre em **Equipe e acessos**, abra a função desejada, marque **Famílias e mensagens** e salve. O dono sempre possui acesso total.
 
 Se o servidor estiver usando outra porta porque a 3000 já está ocupada, utilize a porta exibida no terminal, por exemplo `http://localhost:3001/familia`.
+
+
+### Chat ao vivo entre secretaria e responsáveis
+
+O formulário antigo de mensagens foi substituído por um **chat de conversa**. A secretaria pode criar uma nova conversa, escolher o responsável, o aluno relacionado e o assunto; depois, as respostas continuam no mesmo histórico. O responsável pode iniciar uma conversa ou responder a uma conversa existente pelo próprio portal.
+
+As telas consultam novas mensagens automaticamente a cada poucos segundos, sem exigir atualização manual da página. A conversa mantém as mensagens antigas, identifica quem enviou cada resposta e preserva a separação de acesso entre secretaria e responsável.
