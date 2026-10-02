@@ -49,6 +49,11 @@ export async function makeGuardianSession(account: { id: number; sessionVersion:
 }
 export const guardianSessionMaxAge = SESSION_LIFETIME_MS;
 
+export function normalizeMessageSenderName(senderName?: string | null) {
+  const normalized = senderName?.trim().slice(0, 160);
+  return normalized || "Secretaria";
+}
+
 export async function authenticateGuardianRequest(req: Request): Promise<GuardianSession | null> {
   if (!localAuthStatus().configured) return null;
   const token = parseCookies(req.headers.cookie ?? "")[GUARDIAN_COOKIE_NAME];
@@ -128,7 +133,7 @@ export async function markGuardianNotificationRead(id: number, guardianId: numbe
 
 export async function listGuardianMessages(guardianId: number) {
   const db = requireDatabase(await getDb());
-  return db.select({ id: guardianMessages.id, studentId: guardianMessages.studentId, studentName: students.name, direction: guardianMessages.direction, subject: guardianMessages.subject, body: guardianMessages.body, createdAt: guardianMessages.createdAt, readAt: guardianMessages.readAt })
+  return db.select({ id: guardianMessages.id, studentId: guardianMessages.studentId, studentName: students.name, senderName: guardianMessages.senderName, direction: guardianMessages.direction, subject: guardianMessages.subject, body: guardianMessages.body, createdAt: guardianMessages.createdAt, readAt: guardianMessages.readAt })
     .from(guardianMessages).leftJoin(students, eq(guardianMessages.studentId, students.id)).where(eq(guardianMessages.guardianId, guardianId)).orderBy(desc(guardianMessages.createdAt), desc(guardianMessages.id));
 }
 
@@ -147,14 +152,14 @@ export async function createGuardianMessage(input: { guardianId: number; student
 
 export async function listSchoolMessages() {
   const db = requireDatabase(await getDb());
-  return db.select({ id: guardianMessages.id, guardianId: guardianMessages.guardianId, guardianName: guardianAccounts.fullName, email: guardianAccounts.email, studentId: guardianMessages.studentId, studentName: students.name, direction: guardianMessages.direction, subject: guardianMessages.subject, body: guardianMessages.body, createdAt: guardianMessages.createdAt, readAt: guardianMessages.readAt })
+  return db.select({ id: guardianMessages.id, guardianId: guardianMessages.guardianId, guardianName: guardianAccounts.fullName, email: guardianAccounts.email, studentId: guardianMessages.studentId, studentName: students.name, senderName: guardianMessages.senderName, direction: guardianMessages.direction, subject: guardianMessages.subject, body: guardianMessages.body, createdAt: guardianMessages.createdAt, readAt: guardianMessages.readAt })
     .from(guardianMessages).leftJoin(guardianAccounts, eq(guardianMessages.guardianId, guardianAccounts.id)).leftJoin(students, eq(guardianMessages.studentId, students.id)).orderBy(desc(guardianMessages.createdAt), desc(guardianMessages.id));
 }
 
-export async function sendGuardianAnnouncement(input: { guardianId: number; studentId?: number; subject: string; body: string }) {
+export async function sendGuardianAnnouncement(input: { guardianId: number; studentId?: number; subject: string; body: string; senderName: string }) {
   const db = requireDatabase(await getDb());
   if (input.studentId) await assertGuardianStudent(input.guardianId, input.studentId);
-  const [created] = await db.insert(guardianMessages).values({ guardianId: input.guardianId, studentId: input.studentId ?? null, direction: "fromSchool", subject: input.subject.trim(), body: input.body.trim() });
+  const [created] = await db.insert(guardianMessages).values({ guardianId: input.guardianId, studentId: input.studentId ?? null, direction: "fromSchool", senderName: normalizeMessageSenderName(input.senderName), subject: input.subject.trim(), body: input.body.trim() });
   await db.insert(guardianNotifications).values({ guardianId: input.guardianId, studentId: input.studentId ?? null, kind: "message", title: input.subject.trim(), body: input.body.trim() });
   return (await db.select().from(guardianMessages).where(eq(guardianMessages.id, created.insertId)).limit(1))[0];
 }

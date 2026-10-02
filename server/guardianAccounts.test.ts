@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { jwtVerify } from "jose";
-import { GUARDIAN_COOKIE_NAME, guardianSessionMaxAge, makeGuardianSession } from "./guardianAccounts";
+import { GUARDIAN_COOKIE_NAME, guardianSessionMaxAge, makeGuardianSession, normalizeMessageSenderName } from "./guardianAccounts";
 
 describe("sessão do portal familiar", () => {
   it("usa cookie e audiência separados do painel interno", async () => {
@@ -14,5 +14,14 @@ describe("sessão do portal familiar", () => {
     expect(payload.version).toBe(3);
     expect(payload.aud).toBe("colegio-gestao-family");
     vi.unstubAllEnvs();
+  });
+});
+
+describe("identificação de mensagens escolares", () => {
+  it("mantém o nome da secretaria e usa fallback para mensagens antigas", () => {
+    expect(normalizeMessageSenderName("  Amanda — Secretaria  ")).toBe("Amanda — Secretaria");
+    expect(normalizeMessageSenderName(null)).toBe("Secretaria");
+    expect(normalizeMessageSenderName("   ")).toBe("Secretaria");
+    expect(normalizeMessageSenderName("x".repeat(200))).toHaveLength(160);
   });
 });

@@ -122,6 +122,7 @@ export const guardianMessages = mysqlTable("guardianMessages", {
   guardianId: int("guardianId").notNull(),
   studentId: int("studentId"),
   direction: mysqlEnum("direction", ["fromGuardian", "fromSchool"]).notNull(),
+  senderName: varchar("senderName", { length: 160 }),
   subject: varchar("subject", { length: 160 }).notNull(),
   body: text("body").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

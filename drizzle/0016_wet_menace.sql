@@ -1,0 +1,1 @@
+ALTER TABLE `guardianMessages` ADD `senderName` varchar(160);

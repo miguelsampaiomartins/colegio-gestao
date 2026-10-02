@@ -229,3 +229,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Atualizar automaticamente novas mensagens a cada 3 segundos nos dois lados.
 - [x] Manter as permissões, vínculos de aluno e sessões separadas entre equipe e responsáveis.
 - [x] Validar TypeScript, 41 testes, build e revisão visual das telas.
+
+## Chat sem nova conversa e identificação da secretaria — 02/10/2026
+
+- [x] Remover a opção Nova conversa da área interna.
+- [x] Remover a opção Nova conversa do portal do responsável.
+- [x] Adicionar identificação do responsável, e-mail, aluno e assunto no cabeçalho do chat.
+- [x] Salvar o nome da secretaria autenticada em mensagens escolares e exibi-lo no histórico.
+- [x] Preservar mensagens antigas com fallback visual para “Secretaria”.

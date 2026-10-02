@@ -205,6 +205,10 @@ Se o servidor estiver usando outra porta porque a 3000 já está ocupada, utiliz
 
 ### Chat ao vivo entre secretaria e responsáveis
 
-O formulário antigo de mensagens foi substituído por um **chat de conversa**. A secretaria pode criar uma nova conversa, escolher o responsável, o aluno relacionado e o assunto; depois, as respostas continuam no mesmo histórico. O responsável pode iniciar uma conversa ou responder a uma conversa existente pelo próprio portal.
+O formulário antigo de mensagens foi substituído por um **chat de conversa**. O responsável inicia o contato pelo portal; depois, a secretaria responde no mesmo histórico.
 
 As telas consultam novas mensagens automaticamente a cada poucos segundos, sem exigir atualização manual da página. A conversa mantém as mensagens antigas, identifica quem enviou cada resposta e preserva a separação de acesso entre secretaria e responsável.
+
+### Chat somente por conversas iniciadas pelo responsável
+
+O formulário **Nova conversa** foi removido da área interna e do portal. O responsável inicia o contato pelo portal da família; a secretaria acompanha os chats existentes e responde no mesmo histórico. Cada conversa mostra o nome e o e-mail do responsável, o aluno relacionado e o assunto. Cada mensagem identifica se foi enviada pelo responsável ou pela secretaria; mensagens novas da escola salvam o nome da secretaria que estava autenticada no momento do envio.

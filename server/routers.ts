@@ -161,7 +161,7 @@ export const appRouter = router({
     guardianAccounts: permissionProcedure("communications").query(() => listGuardianAccounts()),
     createGuardianAccount: permissionProcedure("communications").input(z.object({ studentId: z.number().int().positive(), email: z.email().max(320), fullName: z.string().trim().min(2).max(160), password: z.string().min(8).max(128) })).mutation(({ input }) => createGuardianAccount(input)),
     schoolMessages: permissionProcedure("communications").query(() => listSchoolMessages()),
-    sendGuardianAnnouncement: permissionProcedure("communications").input(z.object({ guardianId: z.number().int().positive(), studentId: z.number().int().positive().optional(), subject: z.string().trim().min(2).max(160), body: z.string().trim().min(2).max(5000) })).mutation(({ input }) => sendGuardianAnnouncement(input)),
+    sendGuardianAnnouncement: permissionProcedure("communications").input(z.object({ guardianId: z.number().int().positive(), studentId: z.number().int().positive().optional(), subject: z.string().trim().min(2).max(160), body: z.string().trim().min(2).max(5000) })).mutation(({ ctx, input }) => sendGuardianAnnouncement({ ...input, senderName: ctx.user.name ?? "Secretaria" })),
     updateProfile: ownerProcedure.input(z.object({
       name: z.string().trim().min(2).max(160),
       cnpj: z.string().trim().max(18).transform(value => value.replace(/\D/g, "")).refine(value => !value || value.length === 14, "Informe um CNPJ com 14 dígitos.").optional(),
