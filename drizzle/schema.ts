@@ -113,6 +113,7 @@ export const inventoryItems = mysqlTable("inventoryItems", {
 export const inventoryCategories = mysqlTable("inventoryCategories", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 80 }).notNull().unique(),
+  icon: varchar("icon", { length: 20 }).default("package").notNull(),
   active: int("active").default(1).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

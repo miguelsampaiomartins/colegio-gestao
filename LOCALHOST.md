@@ -173,3 +173,8 @@ No formulário **Nova infração**, o campo de aluno possui uma pesquisa por nom
 A aba **Vendas** possui um painel **Pix Mercado Pago · teste**. Com produtos no carrinho, clique em **Gerar QR Code Pix de teste** para criar uma cobrança sandbox. O painel mostra o QR Code, o código copia e cola, o identificador e o status; **essa ação não cria a venda, não baixa o estoque e não cobra dinheiro real**. O botão **Atualizar status** consulta o Mercado Pago novamente.
 
 As credenciais ficam nas variáveis protegidas `MERCADOPAGO_ACCESS_TOKEN` e `VITE_MERCADOPAGO_PUBLIC_KEY`. Use somente credenciais da seção **Testes** do Mercado Pago. O Access Token é utilizado apenas no servidor e não deve ser colocado em código, capturas de tela ou GitHub. Sem credenciais configuradas, a suíte local ignora o teste de conectividade e o painel informa que o sandbox não está configurado.
+
+
+### Ícones de categorias de produtos
+
+Na aba **Estoque**, em **Categorias de produtos**, escolha um ícone antes de criar a categoria: **Blusa**, **Caixa** ou **Livro**. O ícone aparece ao lado do nome de cada produto no estoque. Categorias antigas recebem automaticamente o ícone de caixa como padrão, enquanto as categorias padrão ficam associadas a blusa, livro e caixa. Após atualizar o código, pare o servidor e execute `pnpm.cmd db:push` no banco local para aplicar a coluna nova; nenhum produto, categoria ou histórico é apagado.

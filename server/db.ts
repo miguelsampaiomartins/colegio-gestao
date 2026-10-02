@@ -17,6 +17,7 @@ import {
   users,
 } from "../drizzle/schema";
 import { formatEnrollmentNumber } from "../shared/enrollmentNumber";
+import { inventoryCategoryIconKeys, type InventoryCategoryIcon } from "../shared/inventory";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -248,13 +249,17 @@ export async function listInventoryCategories() {
   return db.select().from(inventoryCategories).where(eq(inventoryCategories.active, 1)).orderBy(inventoryCategories.name);
 }
 
-export async function createInventoryCategory(name: string) {
+export function normalizeInventoryCategoryIcon(value?: string | null): InventoryCategoryIcon {
+  return inventoryCategoryIconKeys.includes(value as InventoryCategoryIcon) ? value as InventoryCategoryIcon : "package";
+}
+
+export async function createInventoryCategory(name: string, icon?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const cleanName = name.trim();
   if (cleanName.length < 2 || cleanName.length > 80) throw new TRPCError({ code: "BAD_REQUEST", message: "Informe uma categoria entre 2 e 80 caracteres." });
   try {
-    const [created] = await db.insert(inventoryCategories).values({ name: cleanName });
+    const [created] = await db.insert(inventoryCategories).values({ name: cleanName, icon: normalizeInventoryCategoryIcon(icon) });
     return (await db.select().from(inventoryCategories).where(eq(inventoryCategories.id, created.insertId)).limit(1))[0];
   } catch (error) {
     if (typeof error === "object" && error && "code" in error && error.code === "ER_DUP_ENTRY") throw new TRPCError({ code: "CONFLICT", message: "Esta categoria já existe." });

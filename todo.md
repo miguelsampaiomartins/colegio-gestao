@@ -183,3 +183,13 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Adicionar painel na aba Vendas com QR Code, copia e cola e atualização de status.
 - [x] Manter a venda e o estoque inalterados ao gerar apenas a cobrança de teste.
 - [x] Validar TypeScript, 38 testes, build e diff.
+
+
+## Ícones de categorias de estoque — 02/10/2026
+
+- [x] Adicionar coluna aditiva `icon` em `inventoryCategories` com fallback `package`.
+- [x] Associar as categorias padrão aos ícones blusa, livro e caixa sem alterar produtos existentes.
+- [x] Permitir ao dono escolher Blusa, Caixa ou Livro ao criar uma categoria.
+- [x] Exibir o ícone escolhido ao lado de cada produto cadastrado no estoque.
+- [x] Atualizar contratos tRPC, documentação e testes de fallback.
+- [x] Validar TypeScript, 40 testes, build e diff.

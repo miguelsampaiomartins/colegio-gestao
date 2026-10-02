@@ -40,6 +40,7 @@ import {
 import { digitsOnly, isValidCpf, normalizeBrazilianPhone } from "./studentValidation";
 import { actionLabels, listAuditEvents, listBackupRuns, safeRecordAction, safeTargetId } from "./audit";
 import type { PermissionKey } from "../shared/permissions";
+import { inventoryCategoryIconKeys } from "../shared/inventory";
 import { createMercadoPagoPix, getMercadoPagoPayment } from "./mercadoPago";
 
 const cpfInput = z.string().transform(digitsOnly).refine(isValidCpf, "Informe um CPF válido com 11 dígitos.");
@@ -144,7 +145,7 @@ export const appRouter = router({
       .mutation(({ input }) => createEnrollment(input)),
     inventory: permissionProcedure("inventory").query(() => listInventory()),
     inventoryCategories: permissionProcedure("inventory").query(() => listInventoryCategories()),
-    createInventoryCategory: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(80) })).mutation(({ input }) => createInventoryCategory(input.name)),
+    createInventoryCategory: ownerProcedure.input(z.object({ name: z.string().trim().min(2).max(80), icon: z.enum(inventoryCategoryIconKeys).default("package") })).mutation(({ input }) => createInventoryCategory(input.name, input.icon)),
     updateInventoryMinimum: permissionProcedure("inventory").input(z.object({ itemId: z.number().int().positive(), minQuantity: z.number().int().min(0).max(100000) })).mutation(({ input }) => updateInventoryMinimum(input.itemId, input.minQuantity)),
     deleteInventoryProduct: permissionProcedure("inventory").input(z.object({ itemId: z.number().int().positive() })).mutation(({ input }) => deleteInventoryProduct(input.itemId)),
     inventoryHistory: permissionProcedure("inventory").query(() => listInventoryMovements()),

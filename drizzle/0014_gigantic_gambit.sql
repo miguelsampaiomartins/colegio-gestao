@@ -1,0 +1,1 @@
+ALTER TABLE `inventoryCategories` ADD `icon` varchar(20) DEFAULT 'package' NOT NULL;
