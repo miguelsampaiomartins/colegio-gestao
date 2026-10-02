@@ -267,6 +267,16 @@ export async function createInventoryCategory(name: string, icon?: string) {
   }
 }
 
+/** Archives a category from new product forms while preserving products that already use its name. */
+export async function deleteInventoryCategory(categoryId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [category] = await db.select({ id: inventoryCategories.id, active: inventoryCategories.active }).from(inventoryCategories).where(eq(inventoryCategories.id, categoryId)).limit(1);
+  if (!category || !category.active) throw new TRPCError({ code: "NOT_FOUND", message: "Categoria não encontrada ou já excluída." });
+  await db.update(inventoryCategories).set({ active: 0 }).where(and(eq(inventoryCategories.id, categoryId), eq(inventoryCategories.active, 1)));
+  return true;
+}
+
 export async function updateInventoryMinimum(itemId: number, minQuantity: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");

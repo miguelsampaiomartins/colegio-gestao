@@ -201,3 +201,11 @@ Os backups locais criptografados e o teste de recuperação estão implementados
 - [x] Remover os nomes visíveis do seletor e deixar somente as três imagens.
 - [x] Manter `aria-label` e `title` para acessibilidade sem poluir a interface.
 - [x] Validar TypeScript, 40 testes, build e diff.
+
+
+## Exclusão segura de categorias — 02/10/2026
+
+- [x] Adicionar mutação protegida pelo dono para arquivar categorias.
+- [x] Adicionar lixeira e confirmação visual na lista de categorias.
+- [x] Preservar produtos, vendas, movimentações e históricos que usam a categoria.
+- [x] Atualizar documentação e validar TypeScript, 40 testes, build e diff.
